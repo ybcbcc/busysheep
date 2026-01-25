@@ -139,7 +139,7 @@ func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 		Content:   req.Content,
 		ImageURL:  req.ImageURL,
 		Location:  req.Location,
-		Status:    0, // Pending audit
+		Status:    1, // 暂时跳过审核，直接发布 (1: Published)
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}

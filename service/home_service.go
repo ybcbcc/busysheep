@@ -37,7 +37,7 @@ func HomeListHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 混合并排序
-	var items []HomeItem
+	items := make([]HomeItem, 0)
 	for _, l := range lotteries {
 		items = append(items, HomeItem{Type: "lottery", Data: l, CreatedAt: l.CreatedAt})
 	}

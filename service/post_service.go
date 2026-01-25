@@ -36,6 +36,9 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 	// 检查是否配置了COS环境变量
 	cosBucket := os.Getenv("COS_BUCKET")
 	cosRegion := os.Getenv("COS_REGION")
+	// 显式获取密钥 (修复 403 AccessDenied 问题)
+	cosSecretID := os.Getenv("COS_SECRET_ID")
+	cosSecretKey := os.Getenv("COS_SECRET_KEY")
 
 	// 生成唯一文件名
 	filename := fmt.Sprintf("uploads/%d_%s", time.Now().UnixNano(), header.Filename)
@@ -45,12 +48,23 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 		// 使用 COS 上传
 		u, _ := url.Parse(fmt.Sprintf("https://%s.cos.%s.myqcloud.com", cosBucket, cosRegion))
 		b := &cos.BaseURL{BucketURL: u}
-		client := cos.NewClient(b, &http.Client{
-			Transport: &cos.AuthorizationTransport{
-				// 微信云托管容器内部会自动注入临时密钥，无需手动配置 SecretId/Key
-				// SDK 会自动从环境变量获取
-			},
-		})
+		
+		// 优先使用显式密钥，否则降级到自动注入(可能权限不足)
+		var client *cos.Client
+		if cosSecretID != "" && cosSecretKey != "" {
+			client = cos.NewClient(b, &http.Client{
+				Transport: &cos.AuthorizationTransport{
+					SecretID:  cosSecretID,
+					SecretKey: cosSecretKey,
+				},
+			})
+		} else {
+			client = cos.NewClient(b, &http.Client{
+				Transport: &cos.AuthorizationTransport{
+					// 微信云托管容器内部会自动注入临时密钥
+				},
+			})
+		}
 
 		_, err = client.Object.Put(context.Background(), filename, file, nil)
 		if err != nil {

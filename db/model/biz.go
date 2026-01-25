@@ -10,7 +10,7 @@ type User struct {
 	AvatarURL      string    `gorm:"type:varchar(255)" json:"avatarUrl"`
 	Points         int       `gorm:"default:0" json:"points"`
 	IsMember       bool      `gorm:"default:false" json:"isMember"`
-	MemberExpireAt time.Time `json:"memberExpireAt"`
+	MemberExpireAt *time.Time `json:"memberExpireAt"`
 	Token          string    `gorm:"index;type:varchar(64)" json:"token"`
 	CreatedAt      time.Time `json:"createdAt"`
 	UpdatedAt      time.Time `json:"updatedAt"`

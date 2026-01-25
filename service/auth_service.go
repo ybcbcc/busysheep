@@ -119,7 +119,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	if err := dao.Imp.UpsertUser(user); err != nil {
 		res.Code = -1
-		res.ErrorMsg = "Failed to save user"
+		res.ErrorMsg = fmt.Sprintf("Failed to save user: %v", err)
 		writeJSON(w, res)
 		return
 	}

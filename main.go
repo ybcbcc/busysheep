@@ -33,7 +33,7 @@ func main() {
 	http.HandleFunc("/api/post/create", service.CreatePostHandler)
 
 	// User
-	http://HandleFunc("/api/user/info", service.UserInfoHandler)
+	http.HandleFunc("/api/user/info", service.UserInfoHandler)
 	http.HandleFunc("/api/user/update", service.UpdateUserHandler)
 	http.HandleFunc("/api/user/lottery-history", service.UserLotteryHistoryHandler)
 	http.HandleFunc("/api/user/publish-history", service.UserPublishHistoryHandler)

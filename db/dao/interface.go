@@ -4,14 +4,32 @@ import (
 	"wxcloudrun-golang/db/model"
 )
 
-// CounterInterface 计数器数据模型接口
+// CounterInterface 数据模型接口
 type CounterInterface interface {
 	GetCounter(id int32) (*model.CounterModel, error)
 	UpsertCounter(counter *model.CounterModel) error
 	ClearCounter(id int32) error
+
+	// User
+	GetUserByOpenID(openid string) (*model.User, error)
+	GetUserByToken(token string) (*model.User, error)
+	UpsertUser(user *model.User) error
+
+	// Lottery
+	GetActiveLotteries() ([]*model.Lottery, error)
+	GetLotteryByID(id int32) (*model.Lottery, error)
+
+	// Record
+	CreateRecord(record *model.UserLotteryRecord) error
+	GetUserRecords(userID int32) ([]*model.UserLotteryRecord, error)
+
+	// Post
+	CreatePost(post *model.Post) error
+	GetActivePosts() ([]*model.Post, error)
+	GetUserPosts(userID int32) ([]*model.Post, error)
 }
 
-// CounterInterfaceImp 计数器数据模型实现
+// CounterInterfaceImp 数据模型实现
 type CounterInterfaceImp struct{}
 
 // Imp 实现实例

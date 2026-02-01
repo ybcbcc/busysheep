@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math"
 	"net/http"
-	"sort"
 	"time"
 
 	"wxcloudrun-golang/db/dao"
@@ -115,7 +114,6 @@ func UserPublishHistoryHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 1. 获取旧的 Post 发布
 	posts, err := dao.Imp.GetUserPosts(user.ID)
 	if err != nil {
 		res.Code = -1
@@ -124,37 +122,8 @@ func UserPublishHistoryHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 2. 获取新的 Lottery 发布
-	lotteries, err := dao.Imp.GetUserLotteries(user.ID)
-	if err != nil {
-		res.Code = -1
-		res.ErrorMsg = "Failed to fetch lotteries"
-		writeJSON(w, res)
-		return
-	}
-
-	// 3. 混合并排序
-	// 复用 HomeItem 结构，因为前端列表页逻辑类似
-	type HistoryItem struct {
-		Type      string      `json:"type"` // "lottery" or "post"
-		Data      interface{} `json:"data"`
-		CreatedAt time.Time   `json:"createdAt"`
-	}
-
-	items := make([]HistoryItem, 0)
-	for _, l := range lotteries {
-		items = append(items, HistoryItem{Type: "lottery", Data: l, CreatedAt: l.CreatedAt})
-	}
-	for _, p := range posts {
-		items = append(items, HistoryItem{Type: "post", Data: p, CreatedAt: p.CreatedAt})
-	}
-
-	sort.Slice(items, func(i, j int) bool {
-		return items[i].CreatedAt.After(items[j].CreatedAt)
-	})
-
 	res.Code = 0
-	res.Data = items
+	res.Data = posts
 	writeJSON(w, res)
 }
 

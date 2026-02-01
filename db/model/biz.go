@@ -13,8 +13,8 @@ type User struct {
 	AvatarURL         string     `gorm:"type:varchar(500);column:avatar_url" json:"avatarUrl"`
 	Integral          int        `gorm:"default:0" json:"integral"`
 	MemberType        string     `gorm:"type:enum('free', 'basic', 'advanced', 'annual');default:'free'" json:"memberType"`
-	MemberSince       *time.Time `json:"memberSince"`
-	MemberExpiry      *time.Time `json:"memberExpiry"`
+	MemberSince       *time.Time `gorm:"type:datetime" json:"memberSince"`
+	MemberExpiry      *time.Time `gorm:"type:datetime" json:"memberExpiry"`
 	Level             int        `gorm:"default:1" json:"level"`
 	Experience        int        `gorm:"default:0" json:"experience"`
 	DeviceFingerprint string     `gorm:"type:varchar(64)" json:"deviceFingerprint"`
@@ -22,8 +22,8 @@ type User struct {
 	InvitedBy         string     `gorm:"index:idx_invited_by;type:varchar(32)" json:"invitedBy"`
 	Status            string     `gorm:"type:enum('active', 'frozen', 'banned');default:'active'" json:"status"`
 	Token             string     `gorm:"type:varchar(64);index" json:"token"` // 移除 gorm:"-" 以便存库
-	CreatedAt         time.Time  `gorm:"default:CURRENT_TIMESTAMP" json:"createdAt"`
-	UpdatedAt         time.Time  `gorm:"default:CURRENT_TIMESTAMP" json:"updatedAt"`
+	CreatedAt         time.Time  `gorm:"type:datetime;default:CURRENT_TIMESTAMP" json:"createdAt"`
+	UpdatedAt         time.Time  `gorm:"type:datetime;default:CURRENT_TIMESTAMP" json:"updatedAt"`
 }
 
 // Lottery 抽奖活动模型
@@ -42,17 +42,17 @@ type Lottery struct {
 	CurrentParticipants int        `gorm:"default:0" json:"currentParticipants"`
 	WinProbability      float64    `gorm:"type:decimal(5,4);not null" json:"winProbability"` // 0.0001-1.0000
 	WinCount            int        `gorm:"default:1" json:"winCount"`
-	StartTime           time.Time  `gorm:"not null" json:"startTime"`
-	EndTime             time.Time  `gorm:"not null;index:idx_status_endtime" json:"endTime"`
-	ActualDrawTime      *time.Time `json:"actualDrawTime"`
+	StartTime           time.Time  `gorm:"type:datetime;not null" json:"startTime"`
+	EndTime             time.Time  `gorm:"type:datetime;not null;index:idx_status_endtime" json:"endTime"`
+	ActualDrawTime      *time.Time `gorm:"type:datetime" json:"actualDrawTime"`
 	IsPublic            bool       `gorm:"default:true" json:"isPublic"`
 	MemberOnly          bool       `gorm:"default:false;index:idx_member_only" json:"memberOnly"`
 	Status              string     `gorm:"type:enum('pending', 'active', 'finished', 'cancelled');default:'pending';index:idx_status_endtime;index:idx_member_only" json:"status"`
 	AuditStatus         string     `gorm:"type:enum('pending', 'approved', 'rejected');default:'pending'" json:"auditStatus"`
 	AuditReason         string     `gorm:"type:varchar(200)" json:"auditReason"`
 	SeedString          string     `gorm:"type:varchar(500)" json:"seedString"` // 开奖随机种子
-	CreatedAt           time.Time  `gorm:"default:CURRENT_TIMESTAMP" json:"createdAt"`
-	UpdatedAt           time.Time  `gorm:"default:CURRENT_TIMESTAMP" json:"updatedAt"`
+	CreatedAt           time.Time  `gorm:"type:datetime;default:CURRENT_TIMESTAMP" json:"createdAt"`
+	UpdatedAt           time.Time  `gorm:"type:datetime;default:CURRENT_TIMESTAMP" json:"updatedAt"`
 }
 
 // LotteryParticipant 抽奖参与记录
@@ -65,7 +65,7 @@ type LotteryParticipant struct {
 	EntryCount     int       `gorm:"default:1" json:"entryCount"`
 	IsWinner       bool      `gorm:"default:false;index:idx_lottery" json:"isWinner"`
 	PrizeReceived  bool      `gorm:"default:false" json:"prizeReceived"`
-	ParticipatedAt time.Time `gorm:"default:CURRENT_TIMESTAMP;index:idx_user" json:"participatedAt"`
+	ParticipatedAt time.Time `gorm:"type:datetime;default:CURRENT_TIMESTAMP;index:idx_user" json:"participatedAt"`
 }
 
 // Post 发布内容模型 (保留原业务逻辑，适配新ID类型)

@@ -93,13 +93,15 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	user, err := dao.Imp.GetUserByOpenID(openID)
 	if err == gorm.ErrRecordNotFound {
 		// Create new user
+		expiry := time.Now().AddDate(0, 0, 30) // 30 days
 		user = &model.User{
 			ID:                strings.ReplaceAll(uuid.New().String(), "-", ""), // 去掉连字符以适配 varchar(32)
 			OpenID:            openID,
 			Nickname:          "User_" + openID[:6],
 			Phone:             nil, // 待绑定
 			Integral:          1000, // 新用户赠送1000积分用于测试
-			MemberType:        "free",
+			MemberType:        "vip", // 默认赠送VIP
+			MemberExpiry:      &expiry,
 			Status:            "active",
 			CreatedAt:         time.Now(),
 			UpdatedAt:         time.Now(),

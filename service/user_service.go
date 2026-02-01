@@ -92,11 +92,13 @@ func UserLotteryHistoryHandler(w http.ResponseWriter, r *http.Request) {
 	// 获取参与记录
 	records, err := dao.Imp.GetUserParticipants(user.ID)
 	if err != nil {
+		fmt.Printf("Error fetching participants for user %s: %v\n", user.ID, err)
 		res.Code = -1
 		res.ErrorMsg = "Failed to fetch records"
 		writeJSON(w, res)
 		return
 	}
+	fmt.Printf("Found %d participants for user %s\n", len(records), user.ID)
 
 	// 为了前端展示方便，可能需要关联查询Lottery信息
 	// 这里简单起见，返回 records，前端根据 lotteryId 可能需要二次查询或后端做聚合

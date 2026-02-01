@@ -38,6 +38,11 @@ func (imp *CounterInterfaceImp) GetLotteryByID(id int32) (*model.Lottery, error)
 	return &lottery, err
 }
 
+// CreateLottery 创建抽奖活动
+func (imp *CounterInterfaceImp) CreateLottery(lottery *model.Lottery) error {
+	return db.Get().Create(lottery).Error
+}
+
 // CreateRecord 创建抽奖记录
 func (imp *CounterInterfaceImp) CreateRecord(record *model.UserLotteryRecord) error {
 	return db.Get().Create(record).Error
@@ -67,4 +72,21 @@ func (imp *CounterInterfaceImp) GetUserPosts(userID int32) ([]*model.Post, error
 	var posts []*model.Post
 	err := db.Get().Where("user_id = ?", userID).Order("created_at desc").Find(&posts).Error
 	return posts, err
+}
+
+// GetPostByID 获取帖子详情
+func (imp *CounterInterfaceImp) GetPostByID(id int32) (*model.Post, error) {
+	var post model.Post
+	err := db.Get().Where("id = ?", id).First(&post).Error
+	return &post, err
+}
+
+// UpdatePost 更新帖子
+func (imp *CounterInterfaceImp) UpdatePost(post *model.Post) error {
+	return db.Get().Save(post).Error
+}
+
+// DeletePost 删除帖子 (软删除或硬删除，这里使用硬删除)
+func (imp *CounterInterfaceImp) DeletePost(id int32) error {
+	return db.Get().Delete(&model.Post{}, id).Error
 }

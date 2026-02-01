@@ -18,6 +18,7 @@ type CounterInterface interface {
 	// Lottery
 	GetActiveLotteries() ([]*model.Lottery, error)
 	GetLotteryByID(id int32) (*model.Lottery, error)
+	CreateLottery(lottery *model.Lottery) error
 
 	// Record
 	CreateRecord(record *model.UserLotteryRecord) error
@@ -27,6 +28,9 @@ type CounterInterface interface {
 	CreatePost(post *model.Post) error
 	GetActivePosts() ([]*model.Post, error)
 	GetUserPosts(userID int32) ([]*model.Post, error)
+	GetPostByID(id int32) (*model.Post, error)
+	UpdatePost(post *model.Post) error
+	DeletePost(id int32) error
 }
 
 // CounterInterfaceImp 数据模型实现

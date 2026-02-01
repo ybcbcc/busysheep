@@ -18,13 +18,17 @@ type User struct {
 
 // Lottery 抽奖活动模型
 type Lottery struct {
-	ID          int32     `gorm:"primaryKey;autoIncrement" json:"id"`
-	Title       string    `gorm:"type:varchar(128)" json:"title"`
-	Description string    `gorm:"type:text" json:"description"`
-	Status      int       `gorm:"default:1" json:"status"` // 1: 进行中, 0: 结束
-	Probability float64   `gorm:"type:decimal(5,4)" json:"probability"`
-	CreatedAt   time.Time `json:"createdAt"`
-	UpdatedAt   time.Time `json:"updatedAt"`
+	ID              int32     `gorm:"primaryKey;autoIncrement" json:"id"`
+	Title           string    `gorm:"type:varchar(128)" json:"title"`
+	Description     string    `gorm:"type:text" json:"description"`
+	Status          int       `gorm:"default:1" json:"status"` // 1: 进行中, 0: 结束
+	Probability     float64   `gorm:"type:decimal(5,4)" json:"probability"`
+	PrizeType       string    `gorm:"type:varchar(32);default:'virtual'" json:"prizeType"` // virtual, real
+	Cost            int       `gorm:"default:0" json:"cost"`
+	MaxParticipants int       `gorm:"default:0" json:"maxParticipants"`
+	DrawTime        time.Time `json:"drawTime"`
+	CreatedAt       time.Time `json:"createdAt"`
+	UpdatedAt       time.Time `json:"updatedAt"`
 }
 
 // UserLotteryRecord 抽奖记录

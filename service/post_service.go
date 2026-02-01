@@ -155,3 +155,122 @@ func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 	res.Data = post
 	writeJSON(w, res)
 }
+
+// UpdatePostRequest 更新请求
+type UpdatePostRequest struct {
+	ID       int32  `json:"id"`
+	Content  string `json:"content"`
+	ImageURL string `json:"imageUrl"`
+}
+
+// UpdatePostHandler 更新帖子接口
+func UpdatePostHandler(w http.ResponseWriter, r *http.Request) {
+	res := &JsonResult{}
+
+	// 1. Auth
+	user, err := GetUserFromRequest(r)
+	if err != nil {
+		res.Code = 401
+		res.ErrorMsg = "Unauthorized"
+		writeJSON(w, res)
+		return
+	}
+
+	// 2. Parse
+	decoder := json.NewDecoder(r.Body)
+	var req UpdatePostRequest
+	if err := decoder.Decode(&req); err != nil {
+		res.Code = -1
+		res.ErrorMsg = "Invalid JSON"
+		writeJSON(w, res)
+		return
+	}
+
+	// 3. Check ownership
+	post, err := dao.Imp.GetPostByID(req.ID)
+	if err != nil {
+		res.Code = -1
+		res.ErrorMsg = "Post not found"
+		writeJSON(w, res)
+		return
+	}
+
+	if post.UserID != user.ID {
+		res.Code = 403
+		res.ErrorMsg = "Forbidden"
+		writeJSON(w, res)
+		return
+	}
+
+	// 4. Update
+	post.Content = req.Content
+	post.ImageURL = req.ImageURL
+	post.UpdatedAt = time.Now()
+	// post.Status = 0 // 可选：修改后重新审核
+
+	if err := dao.Imp.UpdatePost(post); err != nil {
+		res.Code = -1
+		res.ErrorMsg = "Failed to update post"
+		writeJSON(w, res)
+		return
+	}
+
+	res.Code = 0
+	writeJSON(w, res)
+}
+
+// DeletePostRequest 删除请求
+type DeletePostRequest struct {
+	ID int32 `json:"id"`
+}
+
+// DeletePostHandler 删除帖子接口
+func DeletePostHandler(w http.ResponseWriter, r *http.Request) {
+	res := &JsonResult{}
+
+	// 1. Auth
+	user, err := GetUserFromRequest(r)
+	if err != nil {
+		res.Code = 401
+		res.ErrorMsg = "Unauthorized"
+		writeJSON(w, res)
+		return
+	}
+
+	// 2. Parse
+	decoder := json.NewDecoder(r.Body)
+	var req DeletePostRequest
+	if err := decoder.Decode(&req); err != nil {
+		res.Code = -1
+		res.ErrorMsg = "Invalid JSON"
+		writeJSON(w, res)
+		return
+	}
+
+	// 3. Check ownership
+	post, err := dao.Imp.GetPostByID(req.ID)
+	if err != nil {
+		res.Code = -1
+		res.ErrorMsg = "Post not found"
+		writeJSON(w, res)
+		return
+	}
+
+	if post.UserID != user.ID {
+		res.Code = 403
+		res.ErrorMsg = "Forbidden"
+		writeJSON(w, res)
+		return
+	}
+
+	// 4. Delete
+	if err := dao.Imp.DeletePost(req.ID); err != nil {
+		res.Code = -1
+		res.ErrorMsg = "Failed to delete post"
+		writeJSON(w, res)
+		return
+	}
+
+	res.Code = 0
+	writeJSON(w, res)
+}

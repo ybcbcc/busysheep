@@ -37,6 +37,77 @@ func LotteryDetailHandler(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, res)
 }
 
+// CreateLotteryRequest 创建抽奖请求
+type CreateLotteryRequest struct {
+	Title           string  `json:"title"`
+	Description     string  `json:"description"`
+	PrizeType       string  `json:"prizeType"`
+	Cost            int     `json:"cost"`
+	MaxParticipants int     `json:"maxParticipants"`
+	Probability     float64 `json:"probability"`
+	DrawTime        string  `json:"drawTime"` // Format: "2006-01-02 15:04"
+}
+
+// CreateLotteryHandler 创建抽奖接口
+func CreateLotteryHandler(w http.ResponseWriter, r *http.Request) {
+	res := &JsonResult{}
+
+	// 1. Auth (Optional: Admin check?)
+	_, err := GetUserFromRequest(r)
+	if err != nil {
+		res.Code = 401
+		res.ErrorMsg = "Unauthorized"
+		writeJSON(w, res)
+		return
+	}
+
+	// 2. Parse
+	decoder := json.NewDecoder(r.Body)
+	var req CreateLotteryRequest
+	if err := decoder.Decode(&req); err != nil {
+		res.Code = -1
+		res.ErrorMsg = "Invalid JSON"
+		writeJSON(w, res)
+		return
+	}
+
+	// 3. Convert Time
+	drawTime, err := time.Parse("2006-01-02 15:04", req.DrawTime)
+	if err != nil {
+		// Try ISO format as fallback
+		drawTime, err = time.Parse(time.RFC3339, req.DrawTime)
+		if err != nil {
+			// Default to 24h later if failed
+			drawTime = time.Now().Add(24 * time.Hour)
+		}
+	}
+
+	// 4. Create
+	lottery := &model.Lottery{
+		Title:           req.Title,
+		Description:     req.Description,
+		PrizeType:       req.PrizeType,
+		Cost:            req.Cost,
+		MaxParticipants: req.MaxParticipants,
+		Probability:     req.Probability,
+		DrawTime:        drawTime,
+		Status:          1,
+		CreatedAt:       time.Now(),
+		UpdatedAt:       time.Now(),
+	}
+
+	if err := dao.Imp.CreateLottery(lottery); err != nil {
+		res.Code = -1
+		res.ErrorMsg = "Failed to create lottery"
+		writeJSON(w, res)
+		return
+	}
+
+	res.Code = 0
+	res.Data = lottery
+	writeJSON(w, res)
+}
+
 // DrawRequest 抽奖请求
 type DrawRequest struct {
 	LotteryID int32 `json:"lotteryId"`

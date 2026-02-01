@@ -27,10 +27,13 @@ func main() {
 	// Lottery
 	http.HandleFunc("/api/lottery/detail", service.LotteryDetailHandler)
 	http.HandleFunc("/api/lottery/draw", service.LotteryDrawHandler)
+	http.HandleFunc("/api/lottery/create", service.CreateLotteryHandler)
 
 	// Post
 	http.HandleFunc("/api/upload", service.UploadHandler)
 	http.HandleFunc("/api/post/create", service.CreatePostHandler)
+	http.HandleFunc("/api/post/update", service.UpdatePostHandler)
+	http.HandleFunc("/api/post/delete", service.DeletePostHandler)
 
 	// User
 	http.HandleFunc("/api/user/info", service.UserInfoHandler)

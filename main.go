@@ -20,6 +20,9 @@ func main() {
 	// New routes
 	// Auth
 	http.HandleFunc("/api/auth/login", service.LoginHandler)
+	
+	// Debug
+	http.HandleFunc("/api/debug/db-check", service.DBCheckHandler)
 
 	// Home
 	http.HandleFunc("/api/home/list", service.HomeListHandler)

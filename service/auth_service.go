@@ -104,8 +104,9 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 			UpdatedAt:         time.Now(),
 		}
 	} else if err != nil {
+		fmt.Printf("Database error during login for openid %s: %v\n", openID, err)
 		res.Code = -1
-		res.ErrorMsg = "Database error"
+		res.ErrorMsg = fmt.Sprintf("Database error: %v", err)
 		writeJSON(w, res)
 		return
 	}

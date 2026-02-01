@@ -21,7 +21,7 @@ type User struct {
 	InviteCode        string     `gorm:"uniqueIndex:idx_invite_code;type:varchar(10)" json:"inviteCode"`
 	InvitedBy         string     `gorm:"index:idx_invited_by;type:varchar(32)" json:"invitedBy"`
 	Status            string     `gorm:"type:enum('active', 'frozen', 'banned');default:'active'" json:"status"`
-	Token             string     `gorm:"type:varchar(64);index" json:"token"` // 移除 gorm:"-" 以便存库
+	Token             string     `gorm:"type:varchar(64);index" json:"token"` // 存储用户token用于认证
 	CreatedAt         time.Time  `gorm:"type:datetime;default:CURRENT_TIMESTAMP" json:"createdAt"`
 	UpdatedAt         time.Time  `gorm:"type:datetime;default:CURRENT_TIMESTAMP" json:"updatedAt"`
 }

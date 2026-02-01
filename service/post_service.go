@@ -2,7 +2,9 @@ package service
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"wxcloudrun-golang/db/dao"
@@ -57,7 +59,7 @@ func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 
 	// 3. Save Lottery
 	lottery := &model.Lottery{
-		ID:              uuid.New().String(),
+		ID:              strings.ReplaceAll(uuid.New().String(), "-", ""), // Remove hyphens
 		CreatorID:       user.ID,
 		Title:           req.Title,
 		ImageURL:        req.ImageURL,
@@ -78,8 +80,9 @@ func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := dao.Imp.CreateLottery(lottery); err != nil {
+		fmt.Printf("Error creating lottery: %v\n", err)
 		res.Code = -1
-		res.ErrorMsg = "Failed to create lottery"
+		res.ErrorMsg = fmt.Sprintf("Failed to create lottery: %v", err)
 		writeJSON(w, res)
 		return
 	}

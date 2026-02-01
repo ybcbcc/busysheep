@@ -23,6 +23,7 @@ func main() {
 	
 	// Debug
 	http.HandleFunc("/api/debug/db-check", service.DBCheckHandler)
+	http.HandleFunc("/api/debug/init-tables", service.InitTablesHandler)
 
 	// Home
 	http.HandleFunc("/api/home/list", service.HomeListHandler)

@@ -51,16 +51,29 @@ func Init() error {
 
 	dbInstance = db
 
-	// 清理旧表 (按要求重建)
-	// 注意：Post 和 CounterModel 暂时保留或按需重建，这里主要处理你给出的3张核心新表
-	// 为了确保完全匹配新结构，这里先Drop旧表
+	// ==========================================
+	// 数据库重置逻辑 (根据用户要求：清理旧数据并重建)
+	// ==========================================
+	
+	// 1. 显式清理已知的残留表 (防止表名变更导致的残留)
+	// 这里的表名是硬编码的，确保彻底清理
+	legacyTables := []string{"user_lottery_record", "user", "lottery", "lottery_participant"}
+	for _, tb := range legacyTables {
+		if err := db.Exec(fmt.Sprintf("DROP TABLE IF EXISTS %s", tb)).Error; err != nil {
+			fmt.Printf("Warning: Failed to drop legacy table %s: %v\n", tb, err)
+		}
+	}
+
+	// 2. 使用 GORM 的 DropTable 清理当前模型对应的表 (双重保险)
 	if err := db.Migrator().DropTable(&model.User{}, &model.Lottery{}, &model.LotteryParticipant{}); err != nil {
 		fmt.Printf("Drop tables failed: %v\n", err)
 	}
+
+	fmt.Println("Old tables and data cleared successfully.")
 	
-	// Auto Migrate
+	// 3. 自动迁移创建新表
 	// 注册新模型：User, Lottery, LotteryParticipant
-	// 保留旧模型：CounterModel, Post (Post的UserID字段已更新为string适配)
+	// 保留旧模型：CounterModel, Post
 	err = db.AutoMigrate(&model.CounterModel{}, &model.User{}, &model.Lottery{}, &model.LotteryParticipant{}, &model.Post{})
 	if err != nil {
 		fmt.Println("DB Migrate error,err=", err.Error())

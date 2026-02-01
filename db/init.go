@@ -52,29 +52,15 @@ func Init() error {
 	dbInstance = db
 
 	// ==========================================
-	// 数据库重置逻辑 (根据用户要求：清理旧数据并重建)
+	// 数据库初始化逻辑
+	// 注意：已移除 DropTable 逻辑，防止数据丢失。
 	// ==========================================
 	
-	// 1. 显式清理已知的残留表 (防止表名变更导致的残留)
-	// 这里的表名是硬编码的，确保彻底清理
-	legacyTables := []string{"user_lottery_record", "user", "lottery", "lottery_participant"}
-	for _, tb := range legacyTables {
-		if err := db.Exec(fmt.Sprintf("DROP TABLE IF EXISTS %s", tb)).Error; err != nil {
-			fmt.Printf("Warning: Failed to drop legacy table %s: %v\n", tb, err)
-		}
-	}
-
-	// 2. 使用 GORM 的 DropTable 清理当前模型对应的表 (双重保险)
-	if err := db.Migrator().DropTable(&model.User{}, &model.Lottery{}, &model.LotteryParticipant{}); err != nil {
-		fmt.Printf("Drop tables failed: %v\n", err)
-	}
-
-	fmt.Println("Old tables and data cleared successfully.")
-	
-	// 3. 自动迁移创建新表
+	// 自动迁移创建新表 (只会新增表或列，不会删除数据)
 	// 注册新模型：User, Lottery, LotteryParticipant
-	// 保留旧模型：CounterModel, Post
-	err = db.AutoMigrate(&model.CounterModel{}, &model.User{}, &model.Lottery{}, &model.LotteryParticipant{}, &model.Post{})
+	// 保留旧模型：CounterModel
+	// 注意：Post 模型不再自动迁移，如果需要清理旧数据，请手动操作数据库
+	err = db.AutoMigrate(&model.CounterModel{}, &model.User{}, &model.Lottery{}, &model.LotteryParticipant{})
 	if err != nil {
 		fmt.Println("DB Migrate error,err=", err.Error())
 		return err

@@ -24,6 +24,8 @@ func main() {
 	// Debug
 	http.HandleFunc("/api/debug/db-check", service.DBCheckHandler)
 	http.HandleFunc("/api/debug/init-tables", service.InitTablesHandler)
+	http.HandleFunc("/api/debug/clear-all", service.ClearAllHandler)
+	http.HandleFunc("/api/debug/clear-table", service.ClearTableHandler)
 
 	// Home
 	http.HandleFunc("/api/home/list", service.HomeListHandler)

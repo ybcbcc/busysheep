@@ -170,3 +170,67 @@ func InitTablesHandler(w http.ResponseWriter, r *http.Request) {
 	res.Data = results
 	writeJSON(w, res)
 }
+
+// ClearAllHandler 清空所有业务数据
+func ClearAllHandler(w http.ResponseWriter, r *http.Request) {
+	res := &JsonResult{}
+	db := db.Get()
+	
+	// 只清空数据，不删表
+	// 注意顺序：先删除子表（有外键依赖的），再删除主表
+	tables := []string{"lottery_participant", "lottery", "user", "post"} 
+	results := make(map[string]string)
+	
+	for _, tb := range tables {
+		// 尝试 TRUNCATE，如果失败（如外键限制）则使用 DELETE
+		if err := db.Exec(fmt.Sprintf("TRUNCATE TABLE %s", tb)).Error; err != nil {
+			if err := db.Exec(fmt.Sprintf("DELETE FROM %s", tb)).Error; err != nil {
+				results[tb] = fmt.Sprintf("Error: %v", err)
+			} else {
+				results[tb] = "Success (DELETE)"
+			}
+		} else {
+			results[tb] = "Success (TRUNCATE)"
+		}
+	}
+	
+	res.Code = 0
+	res.Data = results
+	writeJSON(w, res)
+}
+
+// ClearTableHandler 清空指定表数据
+func ClearTableHandler(w http.ResponseWriter, r *http.Request) {
+	res := &JsonResult{}
+	tableName := r.URL.Query().Get("table")
+	
+	if tableName == "" {
+		res.Code = -1
+		res.ErrorMsg = "Table name required"
+		writeJSON(w, res)
+		return
+	}
+	
+	// 白名单检查
+	allowed := map[string]bool{
+		"user": true, "lottery": true, "lottery_participant": true, "post": true, 
+		"Counters": true, "counter_model": true,
+	}
+	
+	if !allowed[tableName] {
+		res.Code = -1
+		res.ErrorMsg = "Table not allowed or invalid"
+		writeJSON(w, res)
+		return
+	}
+	
+	db := db.Get()
+	if err := db.Exec(fmt.Sprintf("DELETE FROM %s", tableName)).Error; err != nil {
+		res.Code = -1
+		res.ErrorMsg = fmt.Sprintf("Failed: %v", err)
+	} else {
+		res.Code = 0
+		res.ErrorMsg = "Success"
+	}
+	writeJSON(w, res)
+}

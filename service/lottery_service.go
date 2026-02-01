@@ -2,6 +2,7 @@ package service
 
 import (
 	"encoding/json"
+	"fmt"
 	"math/rand"
 	"net/http"
 	"time"
@@ -91,6 +92,14 @@ func LotteryDrawHandler(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, res)
 		return
 	}
+	
+	// Check max participants
+	if lottery.CurrentParticipants >= lottery.MaxParticipants {
+		res.Code = -1
+		res.ErrorMsg = "Participants limit reached"
+		writeJSON(w, res)
+		return
+	}
 
 	// 4. 检查是否已参与
 	participants, _ := dao.Imp.GetUserParticipants(user.ID)
@@ -145,9 +154,11 @@ func LotteryDrawHandler(w http.ResponseWriter, r *http.Request) {
 	if isWon {
 		lottery.WinCount += 1
 	}
-	// Need a way to update lottery stats, but dao doesn't have UpsertLottery exposed in interface.
-	// For now, skip updating lottery stats or add UpsertLottery to interface if needed.
-	// Assuming it's fine for this demo.
+	
+	if err := dao.Imp.UpdateLottery(lottery); err != nil {
+		fmt.Printf("Failed to update lottery stats: %v\n", err)
+		// Don't fail the request as the draw was successful
+	}
 
 	// 8. 返回结果
 	prizeName := ""

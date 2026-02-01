@@ -16,22 +16,20 @@ type CounterInterface interface {
 	UpsertUser(user *model.User) error
 
 	// Lottery
-	GetActiveLotteries() ([]*model.Lottery, error)
-	GetLotteryByID(id int32) (*model.Lottery, error)
-	GetUserLotteries(userID int32) ([]*model.Lottery, error) // 新增
 	CreateLottery(lottery *model.Lottery) error
+	GetActiveLotteries() ([]*model.Lottery, error)
+	GetLotteryByID(id string) (*model.Lottery, error)
+	GetUserCreatedLotteries(userID string) ([]*model.Lottery, error)
 
-	// Record
-	CreateRecord(record *model.UserLotteryRecord) error
-	GetUserRecords(userID int32) ([]*model.UserLotteryRecord, error)
+	// Participant
+	CreateParticipant(participant *model.LotteryParticipant) error
+	GetUserParticipants(userID string) ([]*model.LotteryParticipant, error)
+	GetLotteryParticipants(lotteryID string) ([]*model.LotteryParticipant, error)
 
-	// Post
+	// Post (Legacy adapter)
 	CreatePost(post *model.Post) error
 	GetActivePosts() ([]*model.Post, error)
-	GetUserPosts(userID int32) ([]*model.Post, error)
-	GetPostByID(id int32) (*model.Post, error)
-	UpdatePost(post *model.Post) error
-	DeletePost(id int32) error
+	GetUserPosts(userID string) ([]*model.Post, error)
 }
 
 // CounterInterfaceImp 数据模型实现

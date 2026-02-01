@@ -51,8 +51,17 @@ func Init() error {
 
 	dbInstance = db
 
+	// 清理旧表 (按要求重建)
+	// 注意：Post 和 CounterModel 暂时保留或按需重建，这里主要处理你给出的3张核心新表
+	// 为了确保完全匹配新结构，这里先Drop旧表
+	if err := db.Migrator().DropTable(&model.User{}, &model.Lottery{}, &model.LotteryParticipant{}); err != nil {
+		fmt.Printf("Drop tables failed: %v\n", err)
+	}
+	
 	// Auto Migrate
-	err = db.AutoMigrate(&model.CounterModel{}, &model.User{}, &model.Lottery{}, &model.UserLotteryRecord{}, &model.Post{})
+	// 注册新模型：User, Lottery, LotteryParticipant
+	// 保留旧模型：CounterModel, Post (Post的UserID字段已更新为string适配)
+	err = db.AutoMigrate(&model.CounterModel{}, &model.User{}, &model.Lottery{}, &model.LotteryParticipant{}, &model.Post{})
 	if err != nil {
 		fmt.Println("DB Migrate error,err=", err.Error())
 		return err

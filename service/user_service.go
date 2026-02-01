@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math"
 	"net/http"
-	"sort"
 	"time"
 
 	"wxcloudrun-golang/db/dao"
@@ -90,7 +89,8 @@ func UserLotteryHistoryHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	records, err := dao.Imp.GetUserRecords(user.ID)
+	// 获取参与记录
+	records, err := dao.Imp.GetUserParticipants(user.ID)
 	if err != nil {
 		res.Code = -1
 		res.ErrorMsg = "Failed to fetch records"
@@ -98,12 +98,52 @@ func UserLotteryHistoryHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// 为了前端展示方便，可能需要关联查询Lottery信息
+	// 这里简单起见，返回 records，前端根据 lotteryId 可能需要二次查询或后端做聚合
+	// 更好的做法是后端聚合，但 DAO 层目前分离。
+	// 这里我们先返回 records，如果前端需要详情，可以再请求或这里做 Loop
+	// 改进：返回一个包含 Lottery Title 的结构
+	type HistoryItem struct {
+		ID             int64     `json:"id"`
+		LotteryID      string    `json:"lotteryId"`
+		LotteryTitle   string    `json:"lotteryTitle"`
+		IsWinner       bool      `json:"isWinner"`
+		PrizeName      string    `json:"prizeName"`
+		ParticipatedAt time.Time `json:"participatedAt"`
+	}
+
+	items := make([]HistoryItem, 0)
+	for _, rec := range records {
+		lottery, _ := dao.Imp.GetLotteryByID(rec.LotteryID)
+		title := "Unknown Activity"
+		if lottery != nil {
+			title = lottery.Title
+		}
+		
+		// Determine prize name (if winner, query lottery or store in record?)
+		// The UserLotteryRecord in previous schema had PrizeName. The NEW LotteryParticipant DOES NOT have PrizeName.
+		// It only has IsWinner. The PrizeName is in Lottery struct (Single prize per lottery in this simple schema).
+		prizeName := ""
+		if rec.IsWinner && lottery != nil {
+			prizeName = lottery.PrizeName
+		}
+
+		items = append(items, HistoryItem{
+			ID:             rec.ID,
+			LotteryID:      rec.LotteryID,
+			LotteryTitle:   title,
+			IsWinner:       rec.IsWinner,
+			PrizeName:      prizeName,
+			ParticipatedAt: rec.ParticipatedAt,
+		})
+	}
+
 	res.Code = 0
-	res.Data = records
+	res.Data = items
 	writeJSON(w, res)
 }
 
-// UserPublishHistoryHandler 发布历史接口
+// UserPublishHistoryHandler 发布历史接口 (现在是发布的抽奖活动)
 func UserPublishHistoryHandler(w http.ResponseWriter, r *http.Request) {
 	res := &JsonResult{}
 
@@ -115,17 +155,7 @@ func UserPublishHistoryHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 1. 获取旧的 Post 发布
-	posts, err := dao.Imp.GetUserPosts(user.ID)
-	if err != nil {
-		res.Code = -1
-		res.ErrorMsg = "Failed to fetch posts"
-		writeJSON(w, res)
-		return
-	}
-
-	// 2. 获取新的 Lottery 发布
-	lotteries, err := dao.Imp.GetUserLotteries(user.ID)
+	lotteries, err := dao.Imp.GetUserCreatedLotteries(user.ID)
 	if err != nil {
 		res.Code = -1
 		res.ErrorMsg = "Failed to fetch lotteries"
@@ -133,28 +163,8 @@ func UserPublishHistoryHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 3. 混合并排序
-	// 复用 HomeItem 结构，因为前端列表页逻辑类似
-	type HistoryItem struct {
-		Type      string      `json:"type"` // "lottery" or "post"
-		Data      interface{} `json:"data"`
-		CreatedAt time.Time   `json:"createdAt"`
-	}
-
-	items := make([]HistoryItem, 0)
-	for _, l := range lotteries {
-		items = append(items, HistoryItem{Type: "lottery", Data: l, CreatedAt: l.CreatedAt})
-	}
-	for _, p := range posts {
-		items = append(items, HistoryItem{Type: "post", Data: p, CreatedAt: p.CreatedAt})
-	}
-
-	sort.Slice(items, func(i, j int) bool {
-		return items[i].CreatedAt.After(items[j].CreatedAt)
-	})
-
 	res.Code = 0
-	res.Data = items
+	res.Data = lotteries
 	writeJSON(w, res)
 }
 
@@ -171,17 +181,19 @@ func MemberInfoHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var days int
-	if user.IsMember && user.MemberExpireAt != nil && user.MemberExpireAt.After(time.Now()) {
-		days = int(math.Ceil(user.MemberExpireAt.Sub(time.Now()).Hours() / 24))
+	isMember := user.MemberType != "free"
+	if isMember && user.MemberExpiry != nil && user.MemberExpiry.After(time.Now()) {
+		days = int(math.Ceil(user.MemberExpiry.Sub(time.Now()).Hours() / 24))
 	} else {
 		days = 0
 	}
 
 	res.Code = 0
 	res.Data = map[string]interface{}{
-		"isMember":      user.IsMember,
+		"memberType":    user.MemberType,
+		"isMember":      isMember,
 		"daysRemaining": days,
-		"expireAt":      user.MemberExpireAt,
+		"expireAt":      user.MemberExpiry,
 	}
 	writeJSON(w, res)
 }

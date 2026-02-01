@@ -24,42 +24,50 @@ func (imp *CounterInterfaceImp) UpsertUser(user *model.User) error {
 	return db.Get().Save(user).Error
 }
 
-// GetActiveLotteries 获取进行中的抽奖活动
-func (imp *CounterInterfaceImp) GetActiveLotteries() ([]*model.Lottery, error) {
-	var lotteries []*model.Lottery
-	err := db.Get().Where("status = ?", 1).Order("created_at desc").Find(&lotteries).Error
-	return lotteries, err
-}
-
-// GetLotteryByID 获取抽奖活动详情
-func (imp *CounterInterfaceImp) GetLotteryByID(id int32) (*model.Lottery, error) {
-	var lottery model.Lottery
-	err := db.Get().Where("id = ?", id).First(&lottery).Error
-	return &lottery, err
-}
-
-// GetUserLotteries 获取用户发布的抽奖
-func (imp *CounterInterfaceImp) GetUserLotteries(userID int32) ([]*model.Lottery, error) {
-	var lotteries []*model.Lottery
-	err := db.Get().Where("user_id = ?", userID).Order("created_at desc").Find(&lotteries).Error
-	return lotteries, err
-}
-
 // CreateLottery 创建抽奖活动
 func (imp *CounterInterfaceImp) CreateLottery(lottery *model.Lottery) error {
 	return db.Get().Create(lottery).Error
 }
 
-// CreateRecord 创建抽奖记录
-func (imp *CounterInterfaceImp) CreateRecord(record *model.UserLotteryRecord) error {
-	return db.Get().Create(record).Error
+// GetActiveLotteries 获取进行中的抽奖活动
+func (imp *CounterInterfaceImp) GetActiveLotteries() ([]*model.Lottery, error) {
+	var lotteries []*model.Lottery
+	// Status: 'active', AuditStatus: 'approved'
+	err := db.Get().Where("status = ? AND audit_status = ?", "active", "approved").Order("created_at desc").Find(&lotteries).Error
+	return lotteries, err
 }
 
-// GetUserRecords 获取用户抽奖记录
-func (imp *CounterInterfaceImp) GetUserRecords(userID int32) ([]*model.UserLotteryRecord, error) {
-	var records []*model.UserLotteryRecord
-	err := db.Get().Where("user_id = ?", userID).Order("created_at desc").Find(&records).Error
-	return records, err
+// GetLotteryByID 获取抽奖活动详情
+func (imp *CounterInterfaceImp) GetLotteryByID(id string) (*model.Lottery, error) {
+	var lottery model.Lottery
+	err := db.Get().Where("id = ?", id).First(&lottery).Error
+	return &lottery, err
+}
+
+// GetUserCreatedLotteries 获取用户创建的抽奖活动
+func (imp *CounterInterfaceImp) GetUserCreatedLotteries(userID string) ([]*model.Lottery, error) {
+	var lotteries []*model.Lottery
+	err := db.Get().Where("creator_id = ?", userID).Order("created_at desc").Find(&lotteries).Error
+	return lotteries, err
+}
+
+// CreateParticipant 创建参与记录
+func (imp *CounterInterfaceImp) CreateParticipant(participant *model.LotteryParticipant) error {
+	return db.Get().Create(participant).Error
+}
+
+// GetUserParticipants 获取用户参与记录
+func (imp *CounterInterfaceImp) GetUserParticipants(userID string) ([]*model.LotteryParticipant, error) {
+	var participants []*model.LotteryParticipant
+	err := db.Get().Where("user_id = ?", userID).Order("participated_at desc").Find(&participants).Error
+	return participants, err
+}
+
+// GetLotteryParticipants 获取某活动的参与者
+func (imp *CounterInterfaceImp) GetLotteryParticipants(lotteryID string) ([]*model.LotteryParticipant, error) {
+	var participants []*model.LotteryParticipant
+	err := db.Get().Where("lottery_id = ?", lotteryID).Order("participated_at desc").Find(&participants).Error
+	return participants, err
 }
 
 // CreatePost 创建发布内容
@@ -75,25 +83,8 @@ func (imp *CounterInterfaceImp) GetActivePosts() ([]*model.Post, error) {
 }
 
 // GetUserPosts 获取用户发布的帖子
-func (imp *CounterInterfaceImp) GetUserPosts(userID int32) ([]*model.Post, error) {
+func (imp *CounterInterfaceImp) GetUserPosts(userID string) ([]*model.Post, error) {
 	var posts []*model.Post
 	err := db.Get().Where("user_id = ?", userID).Order("created_at desc").Find(&posts).Error
 	return posts, err
-}
-
-// GetPostByID 获取帖子详情
-func (imp *CounterInterfaceImp) GetPostByID(id int32) (*model.Post, error) {
-	var post model.Post
-	err := db.Get().Where("id = ?", id).First(&post).Error
-	return &post, err
-}
-
-// UpdatePost 更新帖子
-func (imp *CounterInterfaceImp) UpdatePost(post *model.Post) error {
-	return db.Get().Save(post).Error
-}
-
-// DeletePost 删除帖子 (软删除或硬删除，这里使用硬删除)
-func (imp *CounterInterfaceImp) DeletePost(id int32) error {
-	return db.Get().Delete(&model.Post{}, id).Error
 }

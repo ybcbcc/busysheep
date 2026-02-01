@@ -27,23 +27,19 @@ func HomeListHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 获取已发布的帖子
-	posts, err := dao.Imp.GetActivePosts()
-	if err != nil {
-		res.Code = -1
-		res.ErrorMsg = "Failed to fetch posts"
-		writeJSON(w, res)
-		return
-	}
-
 	// 混合并排序
 	items := make([]HomeItem, 0)
 	for _, l := range lotteries {
 		items = append(items, HomeItem{Type: "lottery", Data: l, CreatedAt: l.CreatedAt})
 	}
+	// 移除 Post 数据获取和合并逻辑
+	/*
+	posts, err := dao.Imp.GetActivePosts()
+	// ...
 	for _, p := range posts {
 		items = append(items, HomeItem{Type: "post", Data: p, CreatedAt: p.CreatedAt})
 	}
+	*/
 
 	sort.Slice(items, func(i, j int) bool {
 		return items[i].CreatedAt.After(items[j].CreatedAt)

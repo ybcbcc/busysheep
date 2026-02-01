@@ -19,6 +19,7 @@ type User struct {
 // Lottery 抽奖活动模型
 type Lottery struct {
 	ID              int32     `gorm:"primaryKey;autoIncrement" json:"id"`
+	UserID          int32     `gorm:"index" json:"userId"` // New: Bind to creator
 	Title           string    `gorm:"type:varchar(128)" json:"title"`
 	Description     string    `gorm:"type:text" json:"description"`
 	Status          int       `gorm:"default:1" json:"status"` // 1: 进行中, 0: 结束

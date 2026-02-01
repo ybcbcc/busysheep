@@ -43,6 +43,13 @@ func (imp *CounterInterfaceImp) CreateLottery(lottery *model.Lottery) error {
 	return db.Get().Create(lottery).Error
 }
 
+// GetUserLotteries 获取用户创建的抽奖活动
+func (imp *CounterInterfaceImp) GetUserLotteries(userID int32) ([]*model.Lottery, error) {
+	var lotteries []*model.Lottery
+	err := db.Get().Where("user_id = ?", userID).Order("created_at desc").Find(&lotteries).Error
+	return lotteries, err
+}
+
 // CreateRecord 创建抽奖记录
 func (imp *CounterInterfaceImp) CreateRecord(record *model.UserLotteryRecord) error {
 	return db.Get().Create(record).Error

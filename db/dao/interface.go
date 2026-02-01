@@ -19,6 +19,7 @@ type CounterInterface interface {
 	GetActiveLotteries() ([]*model.Lottery, error)
 	GetLotteryByID(id int32) (*model.Lottery, error)
 	CreateLottery(lottery *model.Lottery) error
+	GetUserLotteries(userID int32) ([]*model.Lottery, error) // New
 
 	// Record
 	CreateRecord(record *model.UserLotteryRecord) error

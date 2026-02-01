@@ -84,6 +84,7 @@ func CreateLotteryHandler(w http.ResponseWriter, r *http.Request) {
 
 	// 4. Create
 	lottery := &model.Lottery{
+		UserID:          user.ID, // New
 		Title:           req.Title,
 		Description:     req.Description,
 		PrizeType:       req.PrizeType,

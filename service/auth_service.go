@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"wxcloudrun-golang/db/dao"
@@ -93,7 +94,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	if err == gorm.ErrRecordNotFound {
 		// Create new user
 		user = &model.User{
-			ID:                uuid.New().String(), // 使用 UUID
+			ID:                strings.ReplaceAll(uuid.New().String(), "-", ""), // 去掉连字符以适配 varchar(32)
 			OpenID:            openID,
 			Nickname:          "User_" + openID[:6],
 			Phone:             nil, // 待绑定

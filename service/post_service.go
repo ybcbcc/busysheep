@@ -14,6 +14,7 @@ import (
 // CreateLotteryRequest 发布抽奖请求 (原 CreatePostRequest)
 type CreateLotteryRequest struct {
 	Title           string  `json:"title"`
+	ImageURL        string  `json:"imageUrl"`
 	Description     string  `json:"description"`
 	PrizeName       string  `json:"prizeName"`
 	PrizeValue      int     `json:"prizeValue"`
@@ -59,6 +60,7 @@ func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 		ID:              uuid.New().String(),
 		CreatorID:       user.ID,
 		Title:           req.Title,
+		ImageURL:        req.ImageURL,
 		Description:     req.Description,
 		PrizeName:       req.PrizeName,
 		PrizeValue:      req.PrizeValue,

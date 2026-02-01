@@ -32,6 +32,7 @@ type Lottery struct {
 	ID                  string     `gorm:"primaryKey;type:varchar(32)" json:"id"`
 	CreatorID           string     `gorm:"index:idx_creator;type:varchar(32);not null" json:"creatorId"`
 	Title               string     `gorm:"type:varchar(100);not null" json:"title"`
+	ImageURL            string     `gorm:"type:varchar(255)" json:"imageUrl"` // 活动封面图
 	Description         string     `gorm:"type:text" json:"description"`
 	PrizeType           string     `gorm:"type:enum('integral', 'membership', 'avatar_frame', 'chat_bubble', 'theme', 'external_vip');not null" json:"prizeType"`
 	PrizeValue          int        `gorm:"not null" json:"prizeValue"`

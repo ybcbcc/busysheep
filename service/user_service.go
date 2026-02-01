@@ -196,6 +196,7 @@ func MemberInfoHandler(w http.ResponseWriter, r *http.Request) {
 		"isMember":      isMember,
 		"daysRemaining": days,
 		"expireAt":      user.MemberExpiry,
+		"memberSince":   user.MemberSince,
 	}
 	writeJSON(w, res)
 }

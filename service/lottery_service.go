@@ -53,7 +53,7 @@ func CreateLotteryHandler(w http.ResponseWriter, r *http.Request) {
 	res := &JsonResult{}
 
 	// 1. Auth (Optional: Admin check?)
-	_, err := GetUserFromRequest(r)
+	user, err := GetUserFromRequest(r)
 	if err != nil {
 		res.Code = 401
 		res.ErrorMsg = "Unauthorized"
@@ -84,7 +84,6 @@ func CreateLotteryHandler(w http.ResponseWriter, r *http.Request) {
 
 	// 4. Create
 	lottery := &model.Lottery{
-		UserID:          user.ID, // New
 		Title:           req.Title,
 		Description:     req.Description,
 		PrizeType:       req.PrizeType,

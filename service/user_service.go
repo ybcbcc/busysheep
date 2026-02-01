@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"net/http"
+	"sort"
 	"time"
 
 	"wxcloudrun-golang/db/dao"
@@ -114,22 +115,16 @@ func UserPublishHistoryHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 既然“发布”已经全部变成“抽奖”，这里应该返回用户发布的抽奖列表
-	// 兼容：如果前端还需要旧的 Post 数据，可以做聚合。
-	// 假设用户只关心新的抽奖发布：
-	lotteries, err := dao.Imp.GetUserLotteries(user.ID)
+	posts, err := dao.Imp.GetUserPosts(user.ID)
 	if err != nil {
 		res.Code = -1
-		res.ErrorMsg = "Failed to fetch user lotteries"
+		res.ErrorMsg = "Failed to fetch posts"
 		writeJSON(w, res)
 		return
 	}
 
-	// 转换为前端兼容的结构 (如果需要)
-	// 或者直接返回 lotteries，让前端去适配
-	// 这里直接返回 lotteries
 	res.Code = 0
-	res.Data = lotteries
+	res.Data = posts
 	writeJSON(w, res)
 }
 

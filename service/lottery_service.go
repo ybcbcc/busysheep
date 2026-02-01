@@ -91,6 +91,7 @@ func CreateLotteryHandler(w http.ResponseWriter, r *http.Request) {
 		MaxParticipants: req.MaxParticipants,
 		Probability:     req.Probability,
 		DrawTime:        drawTime,
+		UserID:          user.ID, // 关联创建者
 		Status:          1,
 		CreatedAt:       time.Now(),
 		UpdatedAt:       time.Now(),

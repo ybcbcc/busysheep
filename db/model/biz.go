@@ -6,7 +6,8 @@ import "time"
 // 根据新需求重建，对应 CREATE TABLE users
 type User struct {
 	ID                string     `gorm:"primaryKey;type:varchar(32)" json:"id"` // UUID
-	Phone             string     `gorm:"uniqueIndex:idx_phone;type:varchar(11);not null" json:"phone"`
+	OpenID            string     `gorm:"uniqueIndex:idx_open_id;type:varchar(64);not null" json:"openId"`
+	Phone             *string    `gorm:"uniqueIndex:idx_phone;type:varchar(11)" json:"phone"`
 	PhoneVerified     bool       `gorm:"default:false" json:"phoneVerified"`
 	Nickname          string     `gorm:"type:varchar(50);not null" json:"nickname"`
 	AvatarURL         string     `gorm:"type:varchar(500);column:avatar_url" json:"avatarUrl"`

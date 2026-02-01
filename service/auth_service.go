@@ -96,7 +96,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 			ID:                uuid.New().String(), // 使用 UUID
 			OpenID:            openID,
 			Nickname:          "User_" + openID[:6],
-			Phone:             "", // 待绑定
+			Phone:             nil, // 待绑定
 			Integral:          0,
 			MemberType:        "free",
 			Status:            "active",

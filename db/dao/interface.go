@@ -17,6 +17,8 @@ type CounterInterface interface {
 
 	// Lottery
 	CreateLottery(lottery *model.Lottery) error
+	UpdateLottery(lottery *model.Lottery) error
+	DeleteLottery(id string) error
 	GetActiveLotteries() ([]*model.Lottery, error)
 	GetLotteryByID(id string) (*model.Lottery, error)
 	GetUserCreatedLotteries(userID string) ([]*model.Lottery, error)

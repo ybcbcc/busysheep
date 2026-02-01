@@ -98,7 +98,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 			OpenID:            openID,
 			Nickname:          "User_" + openID[:6],
 			Phone:             nil, // 待绑定
-			Integral:          0,
+			Integral:          1000, // 新用户赠送1000积分用于测试
 			MemberType:        "free",
 			Status:            "active",
 			CreatedAt:         time.Now(),

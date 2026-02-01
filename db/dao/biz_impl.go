@@ -29,6 +29,16 @@ func (imp *CounterInterfaceImp) CreateLottery(lottery *model.Lottery) error {
 	return db.Get().Create(lottery).Error
 }
 
+// UpdateLottery 更新抽奖活动
+func (imp *CounterInterfaceImp) UpdateLottery(lottery *model.Lottery) error {
+	return db.Get().Save(lottery).Error
+}
+
+// DeleteLottery 删除抽奖活动
+func (imp *CounterInterfaceImp) DeleteLottery(id string) error {
+	return db.Get().Where("id = ?", id).Delete(&model.Lottery{}).Error
+}
+
 // GetActiveLotteries 获取进行中的抽奖活动
 func (imp *CounterInterfaceImp) GetActiveLotteries() ([]*model.Lottery, error) {
 	var lotteries []*model.Lottery

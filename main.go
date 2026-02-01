@@ -34,6 +34,8 @@ func main() {
 
 	// Post (Upload logic moved to frontend wx.cloud.uploadFile)
 	http.HandleFunc("/api/post/create", service.CreatePostHandler)
+	http.HandleFunc("/api/post/update", service.UpdatePostHandler)
+	http.HandleFunc("/api/post/delete", service.DeletePostHandler)
 
 	// User
 	http.HandleFunc("/api/user/info", service.UserInfoHandler)

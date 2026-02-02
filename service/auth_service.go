@@ -101,7 +101,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 			Nickname:          "User_" + openID[:6],
 			Phone:             nil, // 待绑定
 			Integral:          1000, // 新用户赠送1000积分用于测试
-			MemberType:        "vip", // 默认赠送VIP
+			MemberType:        "basic", // 默认赠送VIP (使用 basic 适配数据库枚举)
 			MemberSince:       &now,
 			MemberExpiry:      &expiry,
 			Status:            "active",

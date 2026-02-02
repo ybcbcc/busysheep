@@ -6,8 +6,8 @@ import "time"
 // 根据新需求重建，对应 CREATE TABLE users
 type User struct {
 	ID                string     `gorm:"primaryKey;type:varchar(32)" json:"id"` // UUID
-	OpenID            string     `gorm:"uniqueIndex:idx_open_id;type:varchar(64);not null" json:"openId"`
-	Phone             *string    `gorm:"uniqueIndex:idx_phone;type:varchar(11)" json:"phone"`
+	OpenID            string     `gorm:"type:varchar(64);not null" json:"openId"`
+	Phone             *string    `gorm:"type:varchar(11)" json:"phone"`
 	PhoneVerified     bool       `gorm:"default:false" json:"phoneVerified"`
 	Nickname          string     `gorm:"type:varchar(50);not null" json:"nickname"`
 	AvatarURL         string     `gorm:"type:varchar(500);column:avatar_url" json:"avatarUrl"`
@@ -18,7 +18,7 @@ type User struct {
 	Level             int        `gorm:"default:1" json:"level"`
 	Experience        int        `gorm:"default:0" json:"experience"`
 	DeviceFingerprint string     `gorm:"type:varchar(64)" json:"deviceFingerprint"`
-	InviteCode        string     `gorm:"uniqueIndex:idx_invite_code;type:varchar(10)" json:"inviteCode"`
+	InviteCode        string     `gorm:"type:varchar(10)" json:"inviteCode"`
 	InvitedBy         string     `gorm:"index:idx_invited_by;type:varchar(32)" json:"invitedBy"`
 	Status            string     `gorm:"type:enum('active', 'frozen', 'banned');default:'active'" json:"status"`
 	Token             string     `gorm:"type:varchar(64);index" json:"token"` // 存储用户token用于认证
@@ -59,8 +59,8 @@ type Lottery struct {
 // 对应 CREATE TABLE lottery_participants
 type LotteryParticipant struct {
 	ID             int64     `gorm:"primaryKey;autoIncrement" json:"id"`
-	LotteryID      string    `gorm:"type:varchar(32);uniqueIndex:uk_lottery_user;index:idx_lottery;not null" json:"lotteryId"`
-	UserID         string    `gorm:"type:varchar(32);uniqueIndex:uk_lottery_user;index:idx_user;not null" json:"userId"`
+	LotteryID      string    `gorm:"type:varchar(32);index:idx_lottery;not null" json:"lotteryId"`
+	UserID         string    `gorm:"type:varchar(32);index:idx_user;not null" json:"userId"`
 	IntegralSpent  int       `gorm:"not null" json:"integralSpent"`
 	EntryCount     int       `gorm:"default:1" json:"entryCount"`
 	IsWinner       bool      `gorm:"default:false;index:idx_lottery" json:"isWinner"`

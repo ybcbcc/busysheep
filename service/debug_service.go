@@ -105,9 +105,9 @@ func InitTablesHandler(w http.ResponseWriter, r *http.Request) {
 			token VARCHAR(64),
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-			UNIQUE INDEX idx_open_id (open_id),
-			UNIQUE INDEX idx_phone (phone),
-			UNIQUE INDEX idx_invite_code (invite_code),
+			INDEX idx_open_id (open_id),
+			INDEX idx_phone (phone),
+			INDEX idx_invite_code (invite_code),
 			INDEX idx_invited_by (invited_by),
 			INDEX idx_token (token)
 		) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`,
@@ -151,7 +151,7 @@ func InitTablesHandler(w http.ResponseWriter, r *http.Request) {
 			is_winner BOOLEAN DEFAULT FALSE,
 			prize_received BOOLEAN DEFAULT FALSE,
 			participated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-			UNIQUE INDEX uk_lottery_user (lottery_id, user_id),
+			INDEX uk_lottery_user (lottery_id, user_id),
 			INDEX idx_lottery (lottery_id),
 			INDEX idx_user (user_id)
 		) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`,

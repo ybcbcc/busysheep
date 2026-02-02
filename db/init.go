@@ -66,6 +66,19 @@ func Init() error {
 		return err
 	}
 
+	// 额外迁移：删除历史唯一索引（如果存在）
+	dropIndexes := []string{
+		"ALTER TABLE user DROP INDEX idx_open_id",
+		"ALTER TABLE user DROP INDEX idx_phone",
+		"ALTER TABLE user DROP INDEX idx_invite_code",
+		"ALTER TABLE lottery_participant DROP INDEX uk_lottery_user",
+	}
+	for _, sql := range dropIndexes {
+		if err := db.Exec(sql).Error; err != nil {
+			fmt.Println("Drop index ignore error:", sql, "err=", err.Error())
+		}
+	}
+
 	fmt.Println("finish init mysql with ", source)
 	return nil
 }

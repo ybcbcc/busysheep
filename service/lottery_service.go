@@ -32,12 +32,13 @@ func LotteryDetailHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 时间诊断日志
-	now := time.Now()
-	fmt.Printf("[TimeDiag][detail] server_now=%s zone=%s start=%s end=%s status=%s\n",
-		now.Format(time.RFC3339), now.Location().String(),
+	serverNow := time.Now()
+	nowBJ := serverNow.Add(8 * time.Hour)
+	fmt.Printf("[TimeDiag][detail] server_now=%s zone=%s server_now_bj=%s start=%s end=%s status=%s\n",
+		serverNow.Format(time.RFC3339), serverNow.Location().String(), nowBJ.Format(time.RFC3339),
 		lottery.StartTime.Format(time.RFC3339), lottery.EndTime.Format(time.RFC3339), lottery.Status)
 
-	if lottery.Status != "finished" && now.After(lottery.EndTime) {
+	if lottery.Status != "finished" && nowBJ.After(lottery.EndTime) {
 		finalizeRemainingPrizes(lottery)
 	}
 
@@ -107,18 +108,19 @@ func LotteryDrawHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	now := time.Now()
+	nowBJ := now.Add(8 * time.Hour)
 	// 时间诊断日志
-	fmt.Printf("[TimeDiag][draw] server_now=%s zone=%s start=%s end=%s before_start=%t after_end=%t\n",
-		now.Format(time.RFC3339), now.Location().String(),
+	fmt.Printf("[TimeDiag][draw] server_now=%s zone=%s server_now_bj=%s start=%s end=%s before_start=%t after_end=%t\n",
+		now.Format(time.RFC3339), now.Location().String(), nowBJ.Format(time.RFC3339),
 		lottery.StartTime.Format(time.RFC3339), lottery.EndTime.Format(time.RFC3339),
-		now.Before(lottery.StartTime), now.After(lottery.EndTime))
-	if now.Before(lottery.StartTime) {
+		nowBJ.Before(lottery.StartTime), nowBJ.After(lottery.EndTime))
+	if nowBJ.Before(lottery.StartTime) {
 		res.Code = -1
 		res.ErrorMsg = "Not started"
 		writeJSON(w, res)
 		return
 	}
-	if now.After(lottery.EndTime) {
+	if nowBJ.After(lottery.EndTime) {
 		// 到期后进行统一开奖，并允许已报名用户查看结果
 		finalizeRemainingPrizes(lottery)
 		// 查找当前用户报名记录

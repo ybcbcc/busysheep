@@ -52,19 +52,23 @@ func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Parse 时间
-	loc, _ := time.LoadLocation("Asia/Shanghai")
-	startTime := time.Now().In(loc)
+	// 解析并统一存储为 UTC，输入按照北京时间(+08:00)解释
+	bj := time.FixedZone("CST", 8*3600)
+	nowBj := time.Now().In(bj)
+	startTimeBj := nowBj
 	if req.StartTime != "" {
-		if t, err := time.ParseInLocation("2006-01-02 15:04:05", req.StartTime, loc); err == nil {
-			startTime = t
+		if t, err := time.ParseInLocation("2006-01-02 15:04:05", req.StartTime, bj); err == nil {
+			startTimeBj = t
 		}
 	}
 	drawDuration := 0
 	if req.DrawDuration > 0 {
 		drawDuration = req.DrawDuration
 	}
+	startTime := startTimeBj.UTC()
 	endTime := startTime.Add(time.Duration(drawDuration) * time.Minute)
+	fmt.Printf("[TimeDiag][create] bj_now=%s bj_start=%s utc_start=%s utc_end=%s\n",
+		nowBj.Format(time.RFC3339), startTimeBj.Format(time.RFC3339), startTime.Format(time.RFC3339), endTime.Format(time.RFC3339))
 
 	// 3. Save Lottery
 	lottery := &model.Lottery{
@@ -142,8 +146,8 @@ func UpdatePostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 3.1 Guard: 审核通过且已到开始时间后禁止修改，允许删除
-	if lottery.AuditStatus == "approved" && time.Now().After(lottery.StartTime) {
+	nowBJ := time.Now().Add(8 * time.Hour)
+	if lottery.AuditStatus == "approved" && nowBJ.After(lottery.StartTime) {
 		res.Code = -1
 		res.ErrorMsg = "Lottery started and approved; cannot modify"
 		writeJSON(w, res)
@@ -172,10 +176,13 @@ func UpdatePostHandler(w http.ResponseWriter, r *http.Request) {
 		lottery.EndTime = lottery.StartTime.Add(time.Duration(req.DrawDuration) * time.Minute)
 	}
 	if req.StartTime != "" {
-		loc, _ := time.LoadLocation("Asia/Shanghai")
-		if t, err := time.ParseInLocation("2006-01-02 15:04:05", req.StartTime, loc); err == nil {
-			lottery.StartTime = t
-			lottery.EndTime = lottery.StartTime.Add(time.Duration(lottery.DrawDuration) * time.Minute)
+		bj := time.FixedZone("CST", 8*3600)
+		if tBj, err := time.ParseInLocation("2006-01-02 15:04:05", req.StartTime, bj); err == nil {
+			startUTC := tBj.UTC()
+			lottery.StartTime = startUTC
+			lottery.EndTime = startUTC.Add(time.Duration(lottery.DrawDuration) * time.Minute)
+			fmt.Printf("[TimeDiag][update] bj_start=%s utc_start=%s utc_end=%s\n",
+				tBj.Format(time.RFC3339), startUTC.Format(time.RFC3339), lottery.EndTime.Format(time.RFC3339))
 		}
 	}
 	

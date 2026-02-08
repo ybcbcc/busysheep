@@ -31,6 +31,11 @@ func LotteryDetailHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// 自动结算：到达开奖时间且未结算时，执行统一开奖并缓存
+	if lottery.Status != "finished" && time.Now().After(lottery.EndTime) {
+		finalizeRemainingPrizes(lottery)
+	}
+
 	res.Code = 0
 	res.Data = lottery
 	writeJSON(w, res)
@@ -48,6 +53,16 @@ type DrawResponse struct {
 	IsWon     bool   `json:"isWon"`
 }
 
+type RegisterResponse struct {
+	Success bool   `json:"success"`
+	Message string `json:"message"`
+}
+
+type ResultResponse struct {
+	Success   bool   `json:"success"`
+	IsWon     bool   `json:"isWon"`
+	PrizeName string `json:"prizeName"`
+}
 // LotteryDrawHandler 抽奖接口
 func LotteryDrawHandler(w http.ResponseWriter, r *http.Request) {
 	res := &JsonResult{}
@@ -86,17 +101,32 @@ func LotteryDrawHandler(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, res)
 		return
 	}
-	// 结束条件：参与截止或抽奖时间结束
+	// 结束条件：开奖时间到达（endTime）
 	now := time.Now()
-	afterDeadline := false
-	if lottery.ParticipationDeadline != nil {
-		afterDeadline = now.After(*lottery.ParticipationDeadline)
-	}
-	if afterDeadline || now.After(lottery.EndTime) {
-		// 到期后进行结算，保证奖品抽完（若仍有剩余）
+	if now.After(lottery.EndTime) {
+		// 到期后进行统一开奖，并允许已报名用户查看结果
 		finalizeRemainingPrizes(lottery)
-		res.Code = -1
-		res.ErrorMsg = "Activity ended"
+		// 查找当前用户报名记录
+		participants, _ := dao.Imp.GetUserParticipants(user.ID)
+		var mine *model.LotteryParticipant
+		for _, p := range participants {
+			if p.LotteryID == lottery.ID {
+				mine = p
+				break
+			}
+		}
+		if mine == nil {
+			res.Code = -1
+			res.ErrorMsg = "Not participated"
+			writeJSON(w, res)
+			return
+		}
+		res.Code = 0
+		res.Data = ResultResponse{
+			Success:   true,
+			IsWon:     mine.IsWinner,
+			PrizeName: func() string { if mine.IsWinner { return lottery.PrizeName } else { return "" } }(),
+		}
 		writeJSON(w, res)
 		return
 	}
@@ -129,28 +159,7 @@ func LotteryDrawHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 6. 抽奖算法：动态概率，保证奖品抽完
-	rand.Seed(time.Now().UnixNano())
-	remainingPrizes := lottery.PrizeQuantity - lottery.WinCount
-	isWon := false
-	if remainingPrizes > 0 {
-		// 计算剩余名额（包含当前这一次）
-		remainingSlots := lottery.MaxParticipants - lottery.CurrentParticipants
-		if remainingSlots < 1 {
-			remainingSlots = 1
-		}
-		// 顺序抽取m个中奖者算法：每次中奖概率 = 剩余奖品数 / 剩余参与名额
-		p := float64(remainingPrizes) / float64(remainingSlots)
-		if p < 0 {
-			p = 0
-		}
-		if p > 1 {
-			p = 1
-		}
-		isWon = rand.Float64() < p
-	}
-	
-	// 7. 更新数据
+	// 6. 报名：扣积分并记录参与，不立即开奖
 	// 扣减积分
 	user.Integral -= lottery.CostPerEntry
 	if err := dao.Imp.UpsertUser(user); err != nil {
@@ -166,7 +175,7 @@ func LotteryDrawHandler(w http.ResponseWriter, r *http.Request) {
 		UserID:         user.ID,
 		IntegralSpent:  lottery.CostPerEntry,
 		EntryCount:     1,
-		IsWinner:       isWon,
+		IsWinner:       false,
 		PrizeReceived:  false,
 		ParticipatedAt: time.Now(),
 	}
@@ -177,45 +186,16 @@ func LotteryDrawHandler(w http.ResponseWriter, r *http.Request) {
 	
 	// 更新活动参与人数
 	lottery.CurrentParticipants += 1
-	if isWon {
-		lottery.WinCount += 1
-	}
-	// 更新展示用概率：进行中使用动态概率，闭合后固定为 奖品数量/总参与人数
-	if lottery.CurrentParticipants >= lottery.MaxParticipants {
-		if lottery.CurrentParticipants > 0 {
-			lottery.WinProbability = float64(lottery.PrizeQuantity) / float64(lottery.CurrentParticipants)
-		}
-		lottery.Status = "finished"
-		lottery.ActualDrawTime = &now
-	} else {
-		// 动态概率（剩余奖品 / 剩余名额）
-		nextRemainingPrizes := lottery.PrizeQuantity - lottery.WinCount
-		nextRemainingSlots := lottery.MaxParticipants - lottery.CurrentParticipants
-		if nextRemainingSlots < 1 {
-			nextRemainingSlots = 1
-		}
-		lottery.WinProbability = float64(nextRemainingPrizes) / float64(nextRemainingSlots)
-	}
+	// 报名期不更新中奖统计，截止后统一开奖
 	
 	if err := dao.Imp.UpdateLottery(lottery); err != nil {
 		fmt.Printf("Failed to update lottery stats: %v\n", err)
 		// Don't fail the request as the draw was successful
 	}
 
-	// 8. 返回结果
-	prizeName := ""
-	if isWon {
-		prizeName = lottery.PrizeName
-	} else {
-		prizeName = "Thank you"
-	}
-
+	// 7. 返回报名成功
 	res.Code = 0
-	res.Data = DrawResponse{
-		Success:   true,
-		PrizeName: prizeName,
-		IsWon:     isWon,
-	}
+	res.Data = RegisterResponse{Success: true, Message: "Registered"}
 	writeJSON(w, res)
 }
 
@@ -261,6 +241,14 @@ func finalizeRemainingPrizes(lottery *model.Lottery) {
 	}
 	lottery.Status = "finished"
 	t := time.Now()
+	needReward := lottery.ActualDrawTime == nil
 	lottery.ActualDrawTime = &t
 	_ = dao.Imp.UpdateLottery(lottery)
+	if needReward {
+		owner, err := dao.Imp.GetUserByID(lottery.CreatorID)
+		if err == nil && owner != nil {
+			owner.Integral += 10
+			_ = dao.Imp.UpsertUser(owner)
+		}
+	}
 }

@@ -13,6 +13,7 @@ type CounterInterface interface {
 	// User
 	GetUserByOpenID(openid string) (*model.User, error)
 	GetUserByToken(token string) (*model.User, error)
+	GetUserByID(userID string) (*model.User, error)
 	UpsertUser(user *model.User) error
 
 	// Lottery

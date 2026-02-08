@@ -19,6 +19,12 @@ func (imp *CounterInterfaceImp) GetUserByToken(token string) (*model.User, error
 	return &user, err
 }
 
+func (imp *CounterInterfaceImp) GetUserByID(userID string) (*model.User, error) {
+	var user model.User
+	err := db.Get().Where("id = ?", userID).First(&user).Error
+	return &user, err
+}
+
 // UpsertUser 更新或创建用户
 func (imp *CounterInterfaceImp) UpsertUser(user *model.User) error {
 	return db.Get().Save(user).Error

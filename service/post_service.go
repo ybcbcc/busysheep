@@ -25,8 +25,8 @@ type CreateLotteryRequest struct {
 	PrizeQuantity   int     `json:"prizeQuantity"`
 	CostPerEntry    int     `json:"costPerEntry"`
 	MaxParticipants int     `json:"maxParticipants"`
-	ParticipationDeadline string `json:"participationDeadline"` // "2026-02-28 23:59:00"
 	DrawDuration    int     `json:"drawDuration"`              // 单位：分钟
+	StartTime       string  `json:"startTime"`                 // "2026-02-08 12:00:00"
 }
 
 // CreatePostHandler 发布接口 (实际是创建 Lottery)
@@ -54,10 +54,9 @@ func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Parse 时间
 	startTime := time.Now()
-	participationDeadline := startTime.Add(24 * time.Hour)
-	if req.ParticipationDeadline != "" {
-		if t, err := time.Parse("2006-01-02 15:04:05", req.ParticipationDeadline); err == nil {
-			participationDeadline = t
+	if req.StartTime != "" {
+		if t, err := time.Parse("2006-01-02 15:04:05", req.StartTime); err == nil {
+			startTime = t
 		}
 	}
 	drawDuration := 0
@@ -82,7 +81,6 @@ func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 		WinProbability:  0,
 		StartTime:       startTime,
 		EndTime:         endTime,
-		ParticipationDeadline: &participationDeadline,
 		DrawDuration:    drawDuration,
 		Status:          "pending",
 		AuditStatus:     "pending",
@@ -143,6 +141,14 @@ func UpdatePostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// 3.1 Guard: 审核通过且已到开始时间后禁止修改，允许删除
+	if lottery.AuditStatus == "approved" && time.Now().After(lottery.StartTime) {
+		res.Code = -1
+		res.ErrorMsg = "Lottery started and approved; cannot modify"
+		writeJSON(w, res)
+		return
+	}
+
 	if lottery.CreatorID != user.ID {
 		res.Code = 403
 		res.ErrorMsg = "Forbidden"
@@ -160,14 +166,15 @@ func UpdatePostHandler(w http.ResponseWriter, r *http.Request) {
 	if req.MaxParticipants > 0 { lottery.MaxParticipants = req.MaxParticipants }
 	if req.PrizeQuantity > 0 { lottery.PrizeQuantity = req.PrizeQuantity }
 	
-	if req.ParticipationDeadline != "" {
-		if t, err := time.Parse("2006-01-02 15:04:05", req.ParticipationDeadline); err == nil {
-			lottery.ParticipationDeadline = &t
-		}
-	}
 	if req.DrawDuration > 0 {
 		lottery.DrawDuration = req.DrawDuration
-		lottery.EndTime = time.Now().Add(time.Duration(req.DrawDuration) * time.Minute)
+		lottery.EndTime = lottery.StartTime.Add(time.Duration(req.DrawDuration) * time.Minute)
+	}
+	if req.StartTime != "" {
+		if t, err := time.Parse("2006-01-02 15:04:05", req.StartTime); err == nil {
+			lottery.StartTime = t
+			lottery.EndTime = lottery.StartTime.Add(time.Duration(lottery.DrawDuration) * time.Minute)
+		}
 	}
 	
 	lottery.UpdatedAt = time.Now()

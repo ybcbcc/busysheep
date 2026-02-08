@@ -36,15 +36,18 @@ type Lottery struct {
 	ImageURL            string     `gorm:"type:varchar(255)" json:"imageUrl"` // 活动封面图
 	Description         string     `gorm:"type:text" json:"description"`
 	PrizeType           string     `gorm:"type:enum('integral', 'membership', 'avatar_frame', 'chat_bubble', 'theme', 'external_vip');not null" json:"prizeType"`
+	PrizeQuantity       int        `gorm:"not null;default:1" json:"prizeQuantity"`
 	PrizeValue          int        `gorm:"not null" json:"prizeValue"`
 	PrizeName           string     `gorm:"type:varchar(100)" json:"prizeName"`
 	CostPerEntry        int        `gorm:"not null" json:"costPerEntry"`
 	MaxParticipants     int        `gorm:"not null" json:"maxParticipants"`
 	CurrentParticipants int        `gorm:"default:0" json:"currentParticipants"`
-	WinProbability      float64    `gorm:"type:decimal(5,4);not null" json:"winProbability"` // 0.0001-1.0000
-	WinCount            int        `gorm:"default:1" json:"winCount"`
+	WinProbability      float64    `gorm:"type:decimal(5,4)" json:"winProbability"` // 由系统核算，无需前端输入
+	WinCount            int        `gorm:"default:0" json:"winCount"`
 	StartTime           time.Time  `gorm:"type:datetime;not null" json:"startTime"`
 	EndTime             time.Time  `gorm:"type:datetime;not null;index:idx_status_endtime" json:"endTime"`
+	ParticipationDeadline time.Time `gorm:"type:datetime;not null" json:"participationDeadline"`
+	DrawDuration        int        `gorm:"not null;default:0" json:"drawDuration"` // 抽奖持续时间（分钟）
 	ActualDrawTime      *time.Time `gorm:"type:datetime" json:"actualDrawTime"`
 	IsPublic            bool       `gorm:"default:true" json:"isPublic"`
 	MemberOnly          bool       `gorm:"default:false;index:idx_member_only" json:"memberOnly"`
@@ -79,4 +82,19 @@ type Post struct {
 	Status    int       `gorm:"default:0" json:"status"` // 0: 待审核, 1: 已发布
 	CreatedAt time.Time `json:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt"`
+}
+
+// Activity 活动发布模型
+// 对应 CREATE TABLE activities
+type Activity struct {
+	ID                  string    `gorm:"primaryKey;type:varchar(32)" json:"id"`
+	CreatorID           string    `gorm:"index:idx_creator;type:varchar(32);not null" json:"creatorId"`
+	Name                string    `gorm:"type:varchar(100);not null" json:"name"`
+	ImageURL            string    `gorm:"type:varchar(255)" json:"imageUrl"`
+	Content             string    `gorm:"type:text" json:"content"`
+	StartTime           time.Time `gorm:"type:datetime;not null" json:"startTime"`
+	DurationMinutes     int       `gorm:"not null;default:0" json:"durationMinutes"`
+	AppearanceFrequency int       `gorm:"not null;default:0" json:"appearanceFrequency"` // 0: 不自动弹出; -1: 每次进入弹出
+	CreatedAt           time.Time `gorm:"type:datetime;default:CURRENT_TIMESTAMP" json:"createdAt"`
+	UpdatedAt           time.Time `gorm:"type:datetime;default:CURRENT_TIMESTAMP" json:"updatedAt"`
 }

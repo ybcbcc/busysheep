@@ -22,10 +22,11 @@ type CreateLotteryRequest struct {
 	PrizeName       string  `json:"prizeName"`
 	PrizeValue      int     `json:"prizeValue"`
 	PrizeType       string  `json:"prizeType"` // integral, etc.
+	PrizeQuantity   int     `json:"prizeQuantity"`
 	CostPerEntry    int     `json:"costPerEntry"`
 	MaxParticipants int     `json:"maxParticipants"`
-	WinProbability  float64 `json:"winProbability"`
-	EndTime         string  `json:"endTime"` // "2023-01-01 12:00:00"
+	ParticipationDeadline string `json:"participationDeadline"` // "2026-02-28 23:59:00"
+	DrawDuration    int     `json:"drawDuration"`              // 单位：分钟
 }
 
 // CreatePostHandler 发布接口 (实际是创建 Lottery)
@@ -51,12 +52,19 @@ func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Parse Time
-	endTime, err := time.Parse("2006-01-02 15:04:05", req.EndTime)
-	if err != nil {
-		// Try fallback format or default
-		endTime = time.Now().Add(24 * time.Hour)
+	// Parse 时间
+	startTime := time.Now()
+	participationDeadline := startTime.Add(24 * time.Hour)
+	if req.ParticipationDeadline != "" {
+		if t, err := time.Parse("2006-01-02 15:04:05", req.ParticipationDeadline); err == nil {
+			participationDeadline = t
+		}
 	}
+	drawDuration := 0
+	if req.DrawDuration > 0 {
+		drawDuration = req.DrawDuration
+	}
+	endTime := startTime.Add(time.Duration(drawDuration) * time.Minute)
 
 	// 3. Save Lottery
 	lottery := &model.Lottery{
@@ -67,12 +75,15 @@ func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 		Description:     req.Description,
 		PrizeName:       req.PrizeName,
 		PrizeValue:      req.PrizeValue,
-		PrizeType:       req.PrizeType,
+		PrizeType:       func() string { if req.PrizeType == "" { return "integral" }; return req.PrizeType }(),
+		PrizeQuantity:   req.PrizeQuantity,
 		CostPerEntry:    req.CostPerEntry,
 		MaxParticipants: req.MaxParticipants,
-		WinProbability:  req.WinProbability,
-		StartTime:       time.Now(),
+		WinProbability:  0,
+		StartTime:       startTime,
 		EndTime:         endTime,
+		ParticipationDeadline: participationDeadline,
+		DrawDuration:    drawDuration,
 		Status:          "pending",
 		AuditStatus:     "pending",
 		IsPublic:        true,
@@ -147,13 +158,16 @@ func UpdatePostHandler(w http.ResponseWriter, r *http.Request) {
 	if req.PrizeValue > 0 { lottery.PrizeValue = req.PrizeValue }
 	if req.CostPerEntry > 0 { lottery.CostPerEntry = req.CostPerEntry }
 	if req.MaxParticipants > 0 { lottery.MaxParticipants = req.MaxParticipants }
-	if req.WinProbability > 0 { lottery.WinProbability = req.WinProbability }
+	if req.PrizeQuantity > 0 { lottery.PrizeQuantity = req.PrizeQuantity }
 	
-	if req.EndTime != "" {
-		endTime, err := time.Parse("2006-01-02 15:04:05", req.EndTime)
-		if err == nil {
-			lottery.EndTime = endTime
+	if req.ParticipationDeadline != "" {
+		if t, err := time.Parse("2006-01-02 15:04:05", req.ParticipationDeadline); err == nil {
+			lottery.ParticipationDeadline = t
 		}
+	}
+	if req.DrawDuration > 0 {
+		lottery.DrawDuration = req.DrawDuration
+		lottery.EndTime = time.Now().Add(time.Duration(req.DrawDuration) * time.Minute)
 	}
 	
 	lottery.UpdatedAt = time.Now()

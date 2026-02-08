@@ -57,10 +57,10 @@ func Init() error {
 	// ==========================================
 	
 	// 自动迁移创建新表 (只会新增表或列，不会删除数据)
-	// 注册新模型：User, Lottery, LotteryParticipant
+	// 注册新模型：User, Lottery, LotteryParticipant, Activity
 	// 保留旧模型：CounterModel
 	// 注意：Post 模型不再自动迁移，如果需要清理旧数据，请手动操作数据库
-	err = db.AutoMigrate(&model.CounterModel{}, &model.User{}, &model.Lottery{}, &model.LotteryParticipant{})
+	err = db.AutoMigrate(&model.CounterModel{}, &model.User{}, &model.Lottery{}, &model.LotteryParticipant{}, &model.Activity{})
 	if err != nil {
 		fmt.Println("DB Migrate error,err=", err.Error())
 		return err

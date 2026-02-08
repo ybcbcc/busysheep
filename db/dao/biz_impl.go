@@ -1,6 +1,7 @@
 package dao
 
 import (
+	"time"
 	"wxcloudrun-golang/db"
 	"wxcloudrun-golang/db/model"
 )
@@ -78,6 +79,11 @@ func (imp *CounterInterfaceImp) CreateParticipant(participant *model.LotteryPart
 	return db.Get().Create(participant).Error
 }
 
+// UpdateParticipant 更新参与记录
+func (imp *CounterInterfaceImp) UpdateParticipant(participant *model.LotteryParticipant) error {
+	return db.Get().Save(participant).Error
+}
+
 // GetUserParticipants 获取用户参与记录
 func (imp *CounterInterfaceImp) GetUserParticipants(userID string) ([]*model.LotteryParticipant, error) {
 	var participants []*model.LotteryParticipant
@@ -109,4 +115,38 @@ func (imp *CounterInterfaceImp) GetUserPosts(userID string) ([]*model.Post, erro
 	var posts []*model.Post
 	err := db.Get().Where("user_id = ?", userID).Order("created_at desc").Find(&posts).Error
 	return posts, err
+}
+
+// CreateActivity 创建活动
+func (imp *CounterInterfaceImp) CreateActivity(activity *model.Activity) error {
+	return db.Get().Create(activity).Error
+}
+
+// UpdateActivity 更新活动
+func (imp *CounterInterfaceImp) UpdateActivity(activity *model.Activity) error {
+	return db.Get().Save(activity).Error
+}
+
+// GetLatestActivity 获取最近的活动（按创建时间倒序）
+func (imp *CounterInterfaceImp) GetLatestActivity() (*model.Activity, error) {
+	var activity model.Activity
+	err := db.Get().Order("created_at desc").First(&activity).Error
+	return &activity, err
+}
+
+// GetCurrentActiveActivity 获取当前时间范围内的活动
+func (imp *CounterInterfaceImp) GetCurrentActiveActivity(nowTime int64) (*model.Activity, error) {
+	var activity model.Activity
+	t := time.Unix(nowTime, 0)
+	err := db.Get().Where("start_time <= ? AND DATE_ADD(start_time, INTERVAL duration_minutes MINUTE) > ?", t, t).
+		Order("start_time desc").
+		First(&activity).Error
+	return &activity, err
+}
+
+// GetAllActivities 获取所有活动
+func (imp *CounterInterfaceImp) GetAllActivities() ([]*model.Activity, error) {
+	var activities []*model.Activity
+	err := db.Get().Order("created_at desc").Find(&activities).Error
+	return activities, err
 }

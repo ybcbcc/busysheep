@@ -44,6 +44,12 @@ func main() {
 	http.HandleFunc("/api/post/update", service.UpdatePostHandler)
 	http.HandleFunc("/api/post/delete", service.DeletePostHandler)
 
+	// Activity
+	http.HandleFunc("/api/activity/create", service.CreateActivityHandler)
+	http.HandleFunc("/api/activity/latest", service.ActivityLatestHandler)
+	http.HandleFunc("/api/activity/current", service.ActivityCurrentHandler)
+	http.HandleFunc("/api/activity/list", service.ActivityListHandler)
+
 	// User
 	http.HandleFunc("/api/user/info", service.UserInfoHandler)
 	http.HandleFunc("/api/user/update", service.UpdateUserHandler)

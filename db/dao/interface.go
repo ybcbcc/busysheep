@@ -34,6 +34,13 @@ type CounterInterface interface {
 	CreatePost(post *model.Post) error
 	GetActivePosts() ([]*model.Post, error)
 	GetUserPosts(userID string) ([]*model.Post, error)
+
+	// Activity
+	CreateActivity(activity *model.Activity) error
+	UpdateActivity(activity *model.Activity) error
+	GetLatestActivity() (*model.Activity, error)
+	GetCurrentActiveActivity(nowTime int64) (*model.Activity, error)
+	GetAllActivities() ([]*model.Activity, error)
 }
 
 // CounterInterfaceImp 数据模型实现

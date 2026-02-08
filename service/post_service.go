@@ -13,24 +13,6 @@ import (
 	"github.com/google/uuid"
 )
 
-var cnLoc *time.Location
-
-func getCNLoc() *time.Location {
-	if cnLoc != nil {
-		return cnLoc
-	}
-	if loc, err := time.LoadLocation("Asia/Shanghai"); err == nil {
-		cnLoc = loc
-	} else {
-		cnLoc = time.FixedZone("CST", 8*3600)
-	}
-	return cnLoc
-}
-
-func nowCN() time.Time {
-	return time.Now().In(getCNLoc())
-}
-
 // CreateLotteryRequest 发布抽奖请求 (原 CreatePostRequest)
 type CreateLotteryRequest struct {
 	ID              string  `json:"id"` // 用于更新

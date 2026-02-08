@@ -11,24 +11,6 @@ import (
 	"wxcloudrun-golang/db/model"
 )
 
-var cnLoc *time.Location
-
-func getCNLoc() *time.Location {
-	if cnLoc != nil {
-		return cnLoc
-	}
-	if loc, err := time.LoadLocation("Asia/Shanghai"); err == nil {
-		cnLoc = loc
-	} else {
-		cnLoc = time.FixedZone("CST", 8*3600)
-	}
-	return cnLoc
-}
-
-func nowCN() time.Time {
-	return time.Now().In(getCNLoc())
-}
-
 // LotteryDetailHandler 活动详情接口
 func LotteryDetailHandler(w http.ResponseWriter, r *http.Request) {
 	res := &JsonResult{}

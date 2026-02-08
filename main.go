@@ -54,5 +54,8 @@ func main() {
 	// Static files for uploads
 	http.Handle("/uploads/", http.StripPrefix("/uploads/", http.FileServer(http.Dir("./uploads"))))
 
+	// 微信客服消息推送路径
+	http.HandleFunc("/foo/bar", service.KefuHandler)
+
 	log.Fatal(http.ListenAndServe(":80", nil))
 }

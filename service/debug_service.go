@@ -102,6 +102,7 @@ func InitTablesHandler(w http.ResponseWriter, r *http.Request) {
 			invite_code VARCHAR(10),
 			invited_by VARCHAR(32),
 			status ENUM('active', 'frozen', 'banned') DEFAULT 'active',
+			role ENUM('user','admin') DEFAULT 'user',
 			token VARCHAR(64),
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,

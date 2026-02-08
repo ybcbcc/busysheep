@@ -61,6 +61,18 @@ func (imp *CounterInterfaceImp) GetUserCreatedLotteries(userID string) ([]*model
 	return lotteries, err
 }
 
+func (imp *CounterInterfaceImp) GetLotteriesByAuditStatus(auditStatus string) ([]*model.Lottery, error) {
+	var lotteries []*model.Lottery
+	err := db.Get().Where("audit_status = ?", auditStatus).Order("created_at desc").Find(&lotteries).Error
+	return lotteries, err
+}
+
+func (imp *CounterInterfaceImp) GetAllLotteries() ([]*model.Lottery, error) {
+	var lotteries []*model.Lottery
+	err := db.Get().Order("created_at desc").Find(&lotteries).Error
+	return lotteries, err
+}
+
 // CreateParticipant 创建参与记录
 func (imp *CounterInterfaceImp) CreateParticipant(participant *model.LotteryParticipant) error {
 	return db.Get().Create(participant).Error

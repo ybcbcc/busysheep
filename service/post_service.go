@@ -73,8 +73,8 @@ func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 		WinProbability:  req.WinProbability,
 		StartTime:       time.Now(),
 		EndTime:         endTime,
-		Status:          "active", // Default active for demo
-		AuditStatus:     "approved", // Bypass audit
+		Status:          "pending",
+		AuditStatus:     "pending",
 		IsPublic:        true,
 		CreatedAt:       time.Now(),
 		UpdatedAt:       time.Now(),

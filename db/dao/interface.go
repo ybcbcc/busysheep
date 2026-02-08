@@ -22,6 +22,8 @@ type CounterInterface interface {
 	GetActiveLotteries() ([]*model.Lottery, error)
 	GetLotteryByID(id string) (*model.Lottery, error)
 	GetUserCreatedLotteries(userID string) ([]*model.Lottery, error)
+	GetLotteriesByAuditStatus(auditStatus string) ([]*model.Lottery, error)
+	GetAllLotteries() ([]*model.Lottery, error)
 
 	// Participant
 	CreateParticipant(participant *model.LotteryParticipant) error

@@ -105,6 +105,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 			MemberSince:       &now,
 			MemberExpiry:      &expiry,
 			Status:            "active",
+			Role:              "user",
 			InviteCode:        strings.ToUpper(uuid.New().String()[:8]),
 			CreatedAt:         now,
 			UpdatedAt:         now,

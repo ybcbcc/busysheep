@@ -88,7 +88,10 @@ func LotteryDrawHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	// 结束条件：参与截止或抽奖时间结束
 	now := time.Now()
-	afterDeadline := now.After(lottery.ParticipationDeadline)
+	afterDeadline := false
+	if lottery.ParticipationDeadline != nil {
+		afterDeadline = now.After(*lottery.ParticipationDeadline)
+	}
 	if afterDeadline || now.After(lottery.EndTime) {
 		// 到期后进行结算，保证奖品抽完（若仍有剩余）
 		finalizeRemainingPrizes(lottery)

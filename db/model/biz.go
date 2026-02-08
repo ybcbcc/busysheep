@@ -46,7 +46,7 @@ type Lottery struct {
 	WinCount            int        `gorm:"default:0" json:"winCount"`
 	StartTime           time.Time  `gorm:"type:datetime;not null" json:"startTime"`
 	EndTime             time.Time  `gorm:"type:datetime;not null;index:idx_status_endtime" json:"endTime"`
-	ParticipationDeadline time.Time `gorm:"type:datetime;not null" json:"participationDeadline"`
+	ParticipationDeadline *time.Time `gorm:"type:datetime" json:"participationDeadline"`
 	DrawDuration        int        `gorm:"not null;default:0" json:"drawDuration"` // 抽奖持续时间（分钟）
 	ActualDrawTime      *time.Time `gorm:"type:datetime" json:"actualDrawTime"`
 	IsPublic            bool       `gorm:"default:true" json:"isPublic"`

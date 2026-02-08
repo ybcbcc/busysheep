@@ -82,7 +82,7 @@ func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 		WinProbability:  0,
 		StartTime:       startTime,
 		EndTime:         endTime,
-		ParticipationDeadline: participationDeadline,
+		ParticipationDeadline: &participationDeadline,
 		DrawDuration:    drawDuration,
 		Status:          "pending",
 		AuditStatus:     "pending",
@@ -162,7 +162,7 @@ func UpdatePostHandler(w http.ResponseWriter, r *http.Request) {
 	
 	if req.ParticipationDeadline != "" {
 		if t, err := time.Parse("2006-01-02 15:04:05", req.ParticipationDeadline); err == nil {
-			lottery.ParticipationDeadline = t
+			lottery.ParticipationDeadline = &t
 		}
 	}
 	if req.DrawDuration > 0 {

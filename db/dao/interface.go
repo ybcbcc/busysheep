@@ -27,7 +27,6 @@ type CounterInterface interface {
 
 	// Participant
 	CreateParticipant(participant *model.LotteryParticipant) error
-	UpdateParticipant(participant *model.LotteryParticipant) error
 	GetUserParticipants(userID string) ([]*model.LotteryParticipant, error)
 	GetLotteryParticipants(lotteryID string) ([]*model.LotteryParticipant, error)
 
@@ -39,9 +38,13 @@ type CounterInterface interface {
 	// Activity
 	CreateActivity(activity *model.Activity) error
 	UpdateActivity(activity *model.Activity) error
-	GetLatestActivity() (*model.Activity, error)
-	GetCurrentActiveActivity(nowTime int64) (*model.Activity, error)
+	DeleteActivity(id string) error
+	GetActivityByID(id string) (*model.Activity, error)
+	GetActiveActivities() ([]*model.Activity, error)
 	GetAllActivities() ([]*model.Activity, error)
+	GetUserCreatedActivities(userID string) ([]*model.Activity, error)
+	GetLatestActiveActivity() (*model.Activity, error)
+	GetRecentActivities(limit int) ([]*model.Activity, error)
 }
 
 // CounterInterfaceImp 数据模型实现

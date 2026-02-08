@@ -84,17 +84,15 @@ type Post struct {
 	UpdatedAt time.Time `json:"updatedAt"`
 }
 
-// Activity 活动发布模型
-// 对应 CREATE TABLE activities
 type Activity struct {
-	ID                  string    `gorm:"primaryKey;type:varchar(32)" json:"id"`
-	CreatorID           string    `gorm:"index:idx_creator;type:varchar(32);not null" json:"creatorId"`
-	Name                string    `gorm:"type:varchar(100);not null" json:"name"`
-	ImageURL            string    `gorm:"type:varchar(255)" json:"imageUrl"`
-	Content             string    `gorm:"type:text" json:"content"`
-	StartTime           time.Time `gorm:"type:datetime;not null" json:"startTime"`
-	DurationMinutes     int       `gorm:"not null;default:0" json:"durationMinutes"`
-	AppearanceFrequency int       `gorm:"not null;default:0" json:"appearanceFrequency"` // 0: 不自动弹出; -1: 每次进入弹出
-	CreatedAt           time.Time `gorm:"type:datetime;default:CURRENT_TIMESTAMP" json:"createdAt"`
-	UpdatedAt           time.Time `gorm:"type:datetime;default:CURRENT_TIMESTAMP" json:"updatedAt"`
+	ID               string    `gorm:"primaryKey;type:varchar(32)" json:"id"`
+	CreatorID        string    `gorm:"index:idx_creator;type:varchar(32);not null" json:"creatorId"`
+	Name             string    `gorm:"type:varchar(100);not null" json:"name"`
+	ImageURL         string    `gorm:"type:varchar(255)" json:"imageUrl"`
+	Content          string    `gorm:"type:text" json:"content"`
+	StartTime        time.Time `gorm:"type:datetime;not null" json:"startTime"`
+	DurationMinutes  int       `gorm:"not null;default:0" json:"durationMinutes"`
+	AppearanceCount  int       `gorm:"default:0" json:"appearanceCount"`
+	CreatedAt        time.Time `gorm:"type:datetime;default:CURRENT_TIMESTAMP" json:"createdAt"`
+	UpdatedAt        time.Time `gorm:"type:datetime;default:CURRENT_TIMESTAMP" json:"updatedAt"`
 }

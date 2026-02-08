@@ -1,7 +1,6 @@
 package dao
 
 import (
-	"time"
 	"wxcloudrun-golang/db"
 	"wxcloudrun-golang/db/model"
 )
@@ -127,26 +126,55 @@ func (imp *CounterInterfaceImp) UpdateActivity(activity *model.Activity) error {
 	return db.Get().Save(activity).Error
 }
 
-// GetLatestActivity 获取最近的活动（按创建时间倒序）
-func (imp *CounterInterfaceImp) GetLatestActivity() (*model.Activity, error) {
+// DeleteActivity 删除活动
+func (imp *CounterInterfaceImp) DeleteActivity(id string) error {
+	return db.Get().Where("id = ?", id).Delete(&model.Activity{}).Error
+}
+
+// GetActivityByID 获取活动详情
+func (imp *CounterInterfaceImp) GetActivityByID(id string) (*model.Activity, error) {
 	var activity model.Activity
-	err := db.Get().Order("created_at desc").First(&activity).Error
+	err := db.Get().Where("id = ?", id).First(&activity).Error
 	return &activity, err
 }
 
-// GetCurrentActiveActivity 获取当前时间范围内的活动
-func (imp *CounterInterfaceImp) GetCurrentActiveActivity(nowTime int64) (*model.Activity, error) {
-	var activity model.Activity
-	t := time.Unix(nowTime, 0)
-	err := db.Get().Where("start_time <= ? AND DATE_ADD(start_time, INTERVAL duration_minutes MINUTE) > ?", t, t).
-		Order("start_time desc").
-		First(&activity).Error
-	return &activity, err
+// GetActiveActivities 获取当前有效活动
+func (imp *CounterInterfaceImp) GetActiveActivities() ([]*model.Activity, error) {
+	var activities []*model.Activity
+	// 当前时间在时间窗内且 AppearanceCount != 0
+	err := db.Get().Where("start_time <= NOW() AND DATE_ADD(start_time, INTERVAL duration_minutes MINUTE) >= NOW() AND appearance_count <> 0").
+		Order("created_at desc").Find(&activities).Error
+	return activities, err
 }
 
-// GetAllActivities 获取所有活动
+// GetAllActivities 获取全部活动
 func (imp *CounterInterfaceImp) GetAllActivities() ([]*model.Activity, error) {
 	var activities []*model.Activity
 	err := db.Get().Order("created_at desc").Find(&activities).Error
+	return activities, err
+}
+
+// GetUserCreatedActivities 获取用户创建的活动
+func (imp *CounterInterfaceImp) GetUserCreatedActivities(userID string) ([]*model.Activity, error) {
+	var activities []*model.Activity
+	err := db.Get().Where("creator_id = ?", userID).Order("created_at desc").Find(&activities).Error
+	return activities, err
+}
+
+// GetLatestActiveActivity 获取最新有效的活动广告
+func (imp *CounterInterfaceImp) GetLatestActiveActivity() (*model.Activity, error) {
+	var activity model.Activity
+	err := db.Get().Where("start_time <= NOW() AND DATE_ADD(start_time, INTERVAL duration_minutes MINUTE) >= NOW() AND appearance_count <> 0").
+		Order("updated_at desc").First(&activity).Error
+	return &activity, err
+}
+
+// GetRecentActivities 获取最近活动公告
+func (imp *CounterInterfaceImp) GetRecentActivities(limit int) ([]*model.Activity, error) {
+	var activities []*model.Activity
+	if limit <= 0 {
+		limit = 10
+	}
+	err := db.Get().Order("updated_at desc").Limit(limit).Find(&activities).Error
 	return activities, err
 }

@@ -34,6 +34,15 @@ func main() {
 	http.HandleFunc("/api/lottery/detail", service.LotteryDetailHandler)
 	http.HandleFunc("/api/lottery/draw", service.LotteryDrawHandler)
 
+	// Activity
+	http.HandleFunc("/api/activity/list", service.ActivityListHandler)
+	http.HandleFunc("/api/activity/detail", service.ActivityDetailHandler)
+	http.HandleFunc("/api/activity/create", service.ActivityCreateHandler)
+	http.HandleFunc("/api/activity/update", service.ActivityUpdateHandler)
+	http.HandleFunc("/api/activity/delete", service.ActivityDeleteHandler)
+	http.HandleFunc("/api/activity/ad/latest", service.ActivityAdLatestHandler)
+	http.HandleFunc("/api/activity/announcements", service.ActivityAnnouncementsHandler)
+
 	// Admin
 	http.HandleFunc("/api/admin/lotteries", service.AdminLotteryListHandler)
 	http.HandleFunc("/api/admin/lottery/detail", service.AdminLotteryDetailHandler)
@@ -43,12 +52,6 @@ func main() {
 	http.HandleFunc("/api/post/create", service.CreatePostHandler)
 	http.HandleFunc("/api/post/update", service.UpdatePostHandler)
 	http.HandleFunc("/api/post/delete", service.DeletePostHandler)
-
-	// Activity
-	http.HandleFunc("/api/activity/create", service.CreateActivityHandler)
-	http.HandleFunc("/api/activity/latest", service.ActivityLatestHandler)
-	http.HandleFunc("/api/activity/current", service.ActivityCurrentHandler)
-	http.HandleFunc("/api/activity/list", service.ActivityListHandler)
 
 	// User
 	http.HandleFunc("/api/user/info", service.UserInfoHandler)

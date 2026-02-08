@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -92,6 +93,8 @@ func KefuHandler(w http.ResponseWriter, r *http.Request) {
 	body, _ := io.ReadAll(r.Body)
 	defer r.Body.Close()
 
+	log.Printf("kefu push received: ct=%s openid=%s body_len=%d", r.Header.Get("Content-Type"), r.Header.Get("x-wx-openid"), len(body))
+
 	// 中文注释：微信消息推送配置检测，需直接返回 success
 	if isCheckContainerPath(r.Header.Get("Content-Type"), body) {
 		w.Write([]byte("success"))
@@ -135,6 +138,7 @@ func KefuHandler(w http.ResponseWriter, r *http.Request) {
 			ErrMsg  string `json:"errmsg"`
 		}
 		_ = json.NewDecoder(resp.Body).Decode(&res)
+		log.Printf("kefu send result: errcode=%d errmsg=%s", res.ErrCode, res.ErrMsg)
 		if res.ErrCode == 40001 || res.ErrCode == 41001 {
 			// 中文注释：清空缓存后重试
 			tokenMu.Lock()
@@ -143,8 +147,18 @@ func KefuHandler(w http.ResponseWriter, r *http.Request) {
 			tokenMu.Unlock()
 			if resp2, err2 := sendOnce(); err2 == nil && resp2 != nil {
 				defer resp2.Body.Close()
+				var res2 struct {
+					ErrCode int    `json:"errcode"`
+					ErrMsg  string `json:"errmsg"`
+				}
+				_ = json.NewDecoder(resp2.Body).Decode(&res2)
+				log.Printf("kefu resend result: errcode=%d errmsg=%s", res2.ErrCode, res2.ErrMsg)
 			}
+		} else if err != nil {
+			log.Printf("kefu send error: %v", err)
 		}
+	} else if err != nil {
+		log.Printf("kefu sendOnce error: %v", err)
 	}
 
 	// 中文注释：按照微信侧要求返回 success

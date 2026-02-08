@@ -53,9 +53,10 @@ func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Parse 时间
-	startTime := time.Now()
+	loc, _ := time.LoadLocation("Asia/Shanghai")
+	startTime := time.Now().In(loc)
 	if req.StartTime != "" {
-		if t, err := time.Parse("2006-01-02 15:04:05", req.StartTime); err == nil {
+		if t, err := time.ParseInLocation("2006-01-02 15:04:05", req.StartTime, loc); err == nil {
 			startTime = t
 		}
 	}
@@ -171,7 +172,8 @@ func UpdatePostHandler(w http.ResponseWriter, r *http.Request) {
 		lottery.EndTime = lottery.StartTime.Add(time.Duration(req.DrawDuration) * time.Minute)
 	}
 	if req.StartTime != "" {
-		if t, err := time.Parse("2006-01-02 15:04:05", req.StartTime); err == nil {
+		loc, _ := time.LoadLocation("Asia/Shanghai")
+		if t, err := time.ParseInLocation("2006-01-02 15:04:05", req.StartTime, loc); err == nil {
 			lottery.StartTime = t
 			lottery.EndTime = lottery.StartTime.Add(time.Duration(lottery.DrawDuration) * time.Minute)
 		}

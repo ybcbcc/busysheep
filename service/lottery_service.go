@@ -31,8 +31,8 @@ func LotteryDetailHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	nowBJ := time.Now().Add(8 * time.Hour)
-	if lottery.Status != "finished" && nowBJ.After(lottery.EndTime) {
+	now := time.Now()
+	if lottery.Status != "finished" && now.After(lottery.EndTime) {
 		finalizeRemainingPrizes(lottery)
 	}
 
@@ -101,14 +101,14 @@ func LotteryDrawHandler(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, res)
 		return
 	}
-	nowBJ := time.Now().Add(8 * time.Hour)
-	if nowBJ.Before(lottery.StartTime) {
+	now := time.Now()
+	if now.Before(lottery.StartTime) {
 		res.Code = -1
 		res.ErrorMsg = "Not started"
 		writeJSON(w, res)
 		return
 	}
-	if nowBJ.After(lottery.EndTime) {
+	if now.After(lottery.EndTime) {
 		// 到期后进行统一开奖，并允许已报名用户查看结果
 		finalizeRemainingPrizes(lottery)
 		// 查找当前用户报名记录

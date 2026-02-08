@@ -31,8 +31,9 @@ func LotteryDetailHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 自动结算：到达开奖时间且未结算时，执行统一开奖并缓存
-	if lottery.Status != "finished" && nowCN().After(lottery.EndTime) {
+	now := time.Now()
+	end := lottery.EndTime.Add(-8 * time.Hour)
+	if lottery.Status != "finished" && now.After(end) {
 		finalizeRemainingPrizes(lottery)
 	}
 
@@ -101,16 +102,16 @@ func LotteryDrawHandler(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, res)
 		return
 	}
-	// 报名未开始
-	now := nowCN()
-	if now.Before(lottery.StartTime) {
+	now := time.Now()
+	start := lottery.StartTime.Add(-8 * time.Hour)
+	end := lottery.EndTime.Add(-8 * time.Hour)
+	if now.Before(start) {
 		res.Code = -1
-		res.ErrorMsg = fmt.Sprintf("Not started. Now: %s, Start: %s", now.Format(time.RFC3339), lottery.StartTime.Format(time.RFC3339))
+		res.ErrorMsg = "Not started"
 		writeJSON(w, res)
 		return
 	}
-	// 结束条件：开奖时间到达（endTime）
-	if now.After(lottery.EndTime) {
+	if now.After(end) {
 		// 到期后进行统一开奖，并允许已报名用户查看结果
 		finalizeRemainingPrizes(lottery)
 		// 查找当前用户报名记录
@@ -124,7 +125,7 @@ func LotteryDrawHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		if mine == nil {
 			res.Code = -1
-			res.ErrorMsg = fmt.Sprintf("Not participated. Now: %s, End: %s", now.Format(time.RFC3339), lottery.EndTime.Format(time.RFC3339))
+			res.ErrorMsg = "Not participated"
 			writeJSON(w, res)
 			return
 		}
@@ -184,7 +185,7 @@ func LotteryDrawHandler(w http.ResponseWriter, r *http.Request) {
 		EntryCount:     1,
 		IsWinner:       false,
 		PrizeReceived:  false,
-		ParticipatedAt: now,
+		ParticipatedAt: time.Now(),
 	}
 	
 	if err := dao.Imp.CreateParticipant(record); err != nil {
@@ -247,7 +248,7 @@ func finalizeRemainingPrizes(lottery *model.Lottery) {
 		lottery.WinProbability = float64(lottery.PrizeQuantity) / float64(lottery.CurrentParticipants)
 	}
 	lottery.Status = "finished"
-	t := nowCN()
+	t := time.Now()
 	needReward := lottery.ActualDrawTime == nil
 	lottery.ActualDrawTime = &t
 	_ = dao.Imp.UpdateLottery(lottery)

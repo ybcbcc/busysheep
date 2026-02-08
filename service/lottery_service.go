@@ -31,6 +31,12 @@ func LotteryDetailHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// 时间诊断日志
+	now := time.Now()
+	fmt.Printf("[TimeDiag][detail] server_now=%s zone=%s start=%s end=%s status=%s\n",
+		now.Format(time.RFC3339), now.Location().String(),
+		lottery.StartTime.Format(time.RFC3339), lottery.EndTime.Format(time.RFC3339), lottery.Status)
+
 	now := time.Now()
 	if lottery.Status != "finished" && now.After(lottery.EndTime) {
 		finalizeRemainingPrizes(lottery)
@@ -39,7 +45,6 @@ func LotteryDetailHandler(w http.ResponseWriter, r *http.Request) {
 	res.Code = 0
 	res.Data = lottery
 	writeJSON(w, res)
-}
 
 // DrawRequest 抽奖请求
 type DrawRequest struct {
@@ -102,6 +107,11 @@ func LotteryDrawHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	now := time.Now()
+	// 时间诊断日志
+	fmt.Printf("[TimeDiag][draw] server_now=%s zone=%s start=%s end=%s before_start=%t after_end=%t\n",
+		now.Format(time.RFC3339), now.Location().String(),
+		lottery.StartTime.Format(time.RFC3339), lottery.EndTime.Format(time.RFC3339),
+		now.Before(lottery.StartTime), now.After(lottery.EndTime))
 	if now.Before(lottery.StartTime) {
 		res.Code = -1
 		res.ErrorMsg = "Not started"

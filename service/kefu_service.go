@@ -28,10 +28,18 @@ func getAccessToken() (string, error) {
 	if cachedToken != "" && time.Now().Before(expireAt.Add(-time.Minute)) {
 		return cachedToken, nil
 	}
-	appid := os.Getenv("WX_APPID")
-	secret := os.Getenv("WX_APPSECRET")
+	getEnvMulti := func(names ...string) string {
+		for _, n := range names {
+			if v := os.Getenv(n); v != "" {
+				return v
+			}
+		}
+		return ""
+	}
+	appid := getEnvMulti("WX_APPID", "WX_APP_ID")
+	secret := getEnvMulti("WX_APPSECRET", "WX_APP_SECRET")
 	if appid == "" || secret == "" {
-		return "", Err("缺少 WX_APPID 或 WX_APPSECRET 环境变量")
+		return "", Err("缺少 WX_APPID/WX_APPSECRET 或 WX_APP_ID/WX_APP_SECRET 环境变量")
 	}
 	url := "https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=" + appid + "&secret=" + secret
 	resp, err := http.Get(url)

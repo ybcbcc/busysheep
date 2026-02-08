@@ -32,7 +32,7 @@ func LotteryDetailHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	now := time.Now()
-	end := lottery.EndTime.Add(-8 * time.Hour)
+	end := lottery.EndTime.Add(8 * time.Hour)
 	if lottery.Status != "finished" && now.After(end) {
 		finalizeRemainingPrizes(lottery)
 	}

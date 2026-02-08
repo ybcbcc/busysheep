@@ -27,6 +27,7 @@ type CounterInterface interface {
 
 	// Participant
 	CreateParticipant(participant *model.LotteryParticipant) error
+	UpdateParticipant(participant *model.LotteryParticipant) error
 	GetUserParticipants(userID string) ([]*model.LotteryParticipant, error)
 	GetLotteryParticipants(lotteryID string) ([]*model.LotteryParticipant, error)
 

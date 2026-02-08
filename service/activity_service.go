@@ -209,7 +209,15 @@ func ActivityDeleteHandler(w http.ResponseWriter, r *http.Request) {
 
 func ActivityAdLatestHandler(w http.ResponseWriter, r *http.Request) {
 	res := &JsonResult{}
-	activity, err := dao.Imp.GetLatestActiveActivity()
+  user, uerr := GetUserFromRequest(r)
+  if uerr != nil {
+    // 未登录不弹广告
+    res.Code = 0
+    res.Data = nil
+    writeJSON(w, res)
+    return
+  }
+  activity, err := dao.Imp.GetLatestActiveActivity()
 	if err == gorm.ErrRecordNotFound {
 		res.Code = 0
 		res.Data = nil
@@ -221,13 +229,45 @@ func ActivityAdLatestHandler(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, res)
 		return
 	}
-	if activity.AppearanceCount > 0 {
-		activity.AppearanceCount = activity.AppearanceCount - 1
-		activity.UpdatedAt = time.Now()
-		_ = dao.Imp.UpdateActivity(activity)
-	}
-	res.Code = 0
-	res.Data = activity
+  show := false
+  now := time.Now()
+  if activity.AppearanceCount == 0 {
+    show = false
+  } else if activity.AppearanceCount == -1 {
+    show = true
+  } else if activity.AppearanceCount == -2 {
+    exp, e := dao.Imp.GetActivityExposure(activity.ID, user.ID)
+    if e == gorm.ErrRecordNotFound || exp == nil || exp.LastShownDate == nil || !sameDay(*exp.LastShownDate, now) {
+      show = true
+      // 更新曝光为今日
+      if e == gorm.ErrRecordNotFound || exp == nil {
+        exp = &model.ActivityExposure{ActivityID: activity.ID, UserID: user.ID}
+      }
+      d := dateOnly(now)
+      exp.LastShownDate = &d
+      exp.UpdatedAt = now
+      _ = dao.Imp.UpsertActivityExposure(exp)
+    }
+  } else if activity.AppearanceCount > 0 {
+    exp, e := dao.Imp.GetActivityExposure(activity.ID, user.ID)
+    if e == gorm.ErrRecordNotFound || exp == nil || exp.ShownCount < activity.AppearanceCount {
+      show = true
+      if e == gorm.ErrRecordNotFound || exp == nil {
+        exp = &model.ActivityExposure{ActivityID: activity.ID, UserID: user.ID, ShownCount: 0}
+      }
+      exp.ShownCount = exp.ShownCount + 1
+      d := dateOnly(now)
+      exp.LastShownDate = &d
+      exp.UpdatedAt = now
+      _ = dao.Imp.UpsertActivityExposure(exp)
+    }
+  }
+  res.Code = 0
+  if show {
+    res.Data = activity
+  } else {
+    res.Data = nil
+  }
 	writeJSON(w, res)
 }
 
@@ -254,4 +294,15 @@ func ActivityAnnouncementsHandler(w http.ResponseWriter, r *http.Request) {
 
 func uuidTo32(s string) string {
 	return strings.ReplaceAll(s, "-", "")
+}
+
+func sameDay(a time.Time, b time.Time) bool {
+  ay, am, ad := a.Date()
+  by, bm, bd := b.Date()
+  return ay == by && am == bm && ad == bd
+}
+
+func dateOnly(t time.Time) time.Time {
+  y, m, d := t.Date()
+  return time.Date(y, m, d, 0, 0, 0, 0, t.Location())
 }

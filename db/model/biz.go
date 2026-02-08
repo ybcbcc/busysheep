@@ -96,3 +96,18 @@ type Activity struct {
 	CreatedAt        time.Time `gorm:"type:datetime;default:CURRENT_TIMESTAMP" json:"createdAt"`
 	UpdatedAt        time.Time `gorm:"type:datetime;default:CURRENT_TIMESTAMP" json:"updatedAt"`
 }
+
+// ActivityExposure 活动曝光记录（按用户）
+// 设计：
+// - ShownCount：该用户总曝光次数（用于 AppearanceCount>0 的“每用户次数限制”）
+// - LastShownDate：上次曝光日期（用于 AppearanceCount=-2 的“每天出现一次”）
+// 约束：activity_id + user_id 唯一
+type ActivityExposure struct {
+	ID            int64      `gorm:"primaryKey;autoIncrement" json:"id"`
+	ActivityID    string     `gorm:"type:varchar(32);index:idx_activity_user;not null" json:"activityId"`
+	UserID        string     `gorm:"type:varchar(32);index:idx_activity_user;not null" json:"userId"`
+	ShownCount    int        `gorm:"default:0" json:"shownCount"`
+	LastShownDate *time.Time `gorm:"type:date" json:"lastShownDate"`
+	CreatedAt     time.Time  `gorm:"type:datetime;default:CURRENT_TIMESTAMP" json:"createdAt"`
+	UpdatedAt     time.Time  `gorm:"type:datetime;default:CURRENT_TIMESTAMP" json:"updatedAt"`
+}

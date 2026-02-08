@@ -46,6 +46,10 @@ type CounterInterface interface {
 	GetUserCreatedActivities(userID string) ([]*model.Activity, error)
 	GetLatestActiveActivity() (*model.Activity, error)
 	GetRecentActivities(limit int) ([]*model.Activity, error)
+
+	// ActivityExposure
+	GetActivityExposure(activityID, userID string) (*model.ActivityExposure, error)
+	UpsertActivityExposure(exp *model.ActivityExposure) error
 }
 
 // CounterInterfaceImp 数据模型实现

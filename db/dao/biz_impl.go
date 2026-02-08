@@ -178,3 +178,15 @@ func (imp *CounterInterfaceImp) GetRecentActivities(limit int) ([]*model.Activit
 	err := db.Get().Order("updated_at desc").Limit(limit).Find(&activities).Error
 	return activities, err
 }
+
+// GetActivityExposure 查询用户曝光记录
+func (imp *CounterInterfaceImp) GetActivityExposure(activityID, userID string) (*model.ActivityExposure, error) {
+	var exp model.ActivityExposure
+	err := db.Get().Where("activity_id = ? AND user_id = ?", activityID, userID).First(&exp).Error
+	return &exp, err
+}
+
+// UpsertActivityExposure 新增或更新曝光记录
+func (imp *CounterInterfaceImp) UpsertActivityExposure(exp *model.ActivityExposure) error {
+	return db.Get().Save(exp).Error
+}

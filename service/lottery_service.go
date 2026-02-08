@@ -37,7 +37,6 @@ func LotteryDetailHandler(w http.ResponseWriter, r *http.Request) {
 		now.Format(time.RFC3339), now.Location().String(),
 		lottery.StartTime.Format(time.RFC3339), lottery.EndTime.Format(time.RFC3339), lottery.Status)
 
-	now := time.Now()
 	if lottery.Status != "finished" && now.After(lottery.EndTime) {
 		finalizeRemainingPrizes(lottery)
 	}
@@ -45,6 +44,7 @@ func LotteryDetailHandler(w http.ResponseWriter, r *http.Request) {
 	res.Code = 0
 	res.Data = lottery
 	writeJSON(w, res)
+}
 
 // DrawRequest 抽奖请求
 type DrawRequest struct {

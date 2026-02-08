@@ -13,6 +13,24 @@ import (
 	"github.com/google/uuid"
 )
 
+var cnLoc *time.Location
+
+func getCNLoc() *time.Location {
+	if cnLoc != nil {
+		return cnLoc
+	}
+	if loc, err := time.LoadLocation("Asia/Shanghai"); err == nil {
+		cnLoc = loc
+	} else {
+		cnLoc = time.FixedZone("CST", 8*3600)
+	}
+	return cnLoc
+}
+
+func nowCN() time.Time {
+	return time.Now().In(getCNLoc())
+}
+
 // CreateLotteryRequest 发布抽奖请求 (原 CreatePostRequest)
 type CreateLotteryRequest struct {
 	ID              string  `json:"id"` // 用于更新
@@ -53,9 +71,9 @@ func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Parse 时间
-	startTime := time.Now()
+	startTime := nowCN()
 	if req.StartTime != "" {
-		if t, err := time.Parse("2006-01-02 15:04:05", req.StartTime); err == nil {
+		if t, err := time.ParseInLocation("2006-01-02 15:04:05", req.StartTime, getCNLoc()); err == nil {
 			startTime = t
 		}
 	}
@@ -85,8 +103,8 @@ func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 		Status:          "pending",
 		AuditStatus:     "pending",
 		IsPublic:        true,
-		CreatedAt:       time.Now(),
-		UpdatedAt:       time.Now(),
+		CreatedAt:       nowCN(),
+		UpdatedAt:       nowCN(),
 	}
 
 	if err := dao.Imp.CreateLottery(lottery); err != nil {
@@ -142,7 +160,7 @@ func UpdatePostHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 3.1 Guard: 审核通过且已到开始时间后禁止修改，允许删除
-	if lottery.AuditStatus == "approved" && time.Now().After(lottery.StartTime) {
+	if lottery.AuditStatus == "approved" && nowCN().After(lottery.StartTime) {
 		res.Code = -1
 		res.ErrorMsg = "Lottery started and approved; cannot modify"
 		writeJSON(w, res)
@@ -171,13 +189,13 @@ func UpdatePostHandler(w http.ResponseWriter, r *http.Request) {
 		lottery.EndTime = lottery.StartTime.Add(time.Duration(req.DrawDuration) * time.Minute)
 	}
 	if req.StartTime != "" {
-		if t, err := time.Parse("2006-01-02 15:04:05", req.StartTime); err == nil {
+		if t, err := time.ParseInLocation("2006-01-02 15:04:05", req.StartTime, getCNLoc()); err == nil {
 			lottery.StartTime = t
 			lottery.EndTime = lottery.StartTime.Add(time.Duration(lottery.DrawDuration) * time.Minute)
 		}
 	}
 	
-	lottery.UpdatedAt = time.Now()
+	lottery.UpdatedAt = nowCN()
 
 	if err := dao.Imp.UpdateLottery(lottery); err != nil {
 		res.Code = -1

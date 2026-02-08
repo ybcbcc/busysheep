@@ -11,6 +11,24 @@ import (
 	"wxcloudrun-golang/db/model"
 )
 
+var cnLoc *time.Location
+
+func getCNLoc() *time.Location {
+	if cnLoc != nil {
+		return cnLoc
+	}
+	if loc, err := time.LoadLocation("Asia/Shanghai"); err == nil {
+		cnLoc = loc
+	} else {
+		cnLoc = time.FixedZone("CST", 8*3600)
+	}
+	return cnLoc
+}
+
+func nowCN() time.Time {
+	return time.Now().In(getCNLoc())
+}
+
 // LotteryDetailHandler 活动详情接口
 func LotteryDetailHandler(w http.ResponseWriter, r *http.Request) {
 	res := &JsonResult{}
@@ -32,7 +50,7 @@ func LotteryDetailHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 自动结算：到达开奖时间且未结算时，执行统一开奖并缓存
-	if lottery.Status != "finished" && time.Now().After(lottery.EndTime) {
+	if lottery.Status != "finished" && nowCN().After(lottery.EndTime) {
 		finalizeRemainingPrizes(lottery)
 	}
 
@@ -101,8 +119,15 @@ func LotteryDrawHandler(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, res)
 		return
 	}
+	// 报名未开始
+	now := nowCN()
+	if now.Before(lottery.StartTime) {
+		res.Code = -1
+		res.ErrorMsg = fmt.Sprintf("Not started. Now: %s, Start: %s", now.Format(time.RFC3339), lottery.StartTime.Format(time.RFC3339))
+		writeJSON(w, res)
+		return
+	}
 	// 结束条件：开奖时间到达（endTime）
-	now := time.Now()
 	if now.After(lottery.EndTime) {
 		// 到期后进行统一开奖，并允许已报名用户查看结果
 		finalizeRemainingPrizes(lottery)
@@ -117,7 +142,7 @@ func LotteryDrawHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		if mine == nil {
 			res.Code = -1
-			res.ErrorMsg = "Not participated"
+			res.ErrorMsg = fmt.Sprintf("Not participated. Now: %s, End: %s", now.Format(time.RFC3339), lottery.EndTime.Format(time.RFC3339))
 			writeJSON(w, res)
 			return
 		}
@@ -177,7 +202,7 @@ func LotteryDrawHandler(w http.ResponseWriter, r *http.Request) {
 		EntryCount:     1,
 		IsWinner:       false,
 		PrizeReceived:  false,
-		ParticipatedAt: time.Now(),
+		ParticipatedAt: now,
 	}
 	
 	if err := dao.Imp.CreateParticipant(record); err != nil {
@@ -240,7 +265,7 @@ func finalizeRemainingPrizes(lottery *model.Lottery) {
 		lottery.WinProbability = float64(lottery.PrizeQuantity) / float64(lottery.CurrentParticipants)
 	}
 	lottery.Status = "finished"
-	t := time.Now()
+	t := nowCN()
 	needReward := lottery.ActualDrawTime == nil
 	lottery.ActualDrawTime = &t
 	_ = dao.Imp.UpdateLottery(lottery)

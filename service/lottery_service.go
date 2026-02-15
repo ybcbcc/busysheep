@@ -31,16 +31,11 @@ func LotteryDetailHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 时间诊断日志
+	// 时间诊断日志（不做服务端时间比较）
 	serverNow := time.Now()
-	nowBJ := serverNow.Add(8 * time.Hour)
-	fmt.Printf("[TimeDiag][detail] server_now=%s zone=%s server_now_bj=%s start=%s end=%s status=%s\n",
-		serverNow.Format(time.RFC3339), serverNow.Location().String(), nowBJ.Format(time.RFC3339),
+	fmt.Printf("[TimeDiag][detail] server_now=%s zone=%s start=%s end=%s status=%s\n",
+		serverNow.Format(time.RFC3339), serverNow.Location().String(),
 		lottery.StartTime.Format(time.RFC3339), lottery.EndTime.Format(time.RFC3339), lottery.Status)
-
-	if lottery.Status != "finished" && nowBJ.After(lottery.EndTime) {
-		finalizeRemainingPrizes(lottery)
-	}
 
 	res.Code = 0
 	res.Data = lottery
@@ -50,6 +45,7 @@ func LotteryDetailHandler(w http.ResponseWriter, r *http.Request) {
 // DrawRequest 抽奖请求
 type DrawRequest struct {
 	LotteryID string `json:"lotteryId"`
+	ClientNow string `json:"clientNow"`
 }
 
 // DrawResponse 抽奖响应
@@ -107,20 +103,24 @@ func LotteryDrawHandler(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, res)
 		return
 	}
-	now := time.Now()
-	nowBJ := now.Add(8 * time.Hour)
-	// 时间诊断日志
-	fmt.Printf("[TimeDiag][draw] server_now=%s zone=%s server_now_bj=%s start=%s end=%s before_start=%t after_end=%t\n",
-		now.Format(time.RFC3339), now.Location().String(), nowBJ.Format(time.RFC3339),
+	// 使用客户端时间进行比较
+	clientNow := time.Now()
+	if req.ClientNow != "" {
+		if t, err := time.Parse(time.RFC3339, req.ClientNow); err == nil {
+			clientNow = t
+		}
+	}
+	fmt.Printf("[TimeDiag][draw] client_now=%s start=%s end=%s before_start=%t after_end=%t\n",
+		clientNow.Format(time.RFC3339),
 		lottery.StartTime.Format(time.RFC3339), lottery.EndTime.Format(time.RFC3339),
-		nowBJ.Before(lottery.StartTime), nowBJ.After(lottery.EndTime))
-	if nowBJ.Before(lottery.StartTime) {
+		clientNow.Before(lottery.StartTime), clientNow.After(lottery.EndTime))
+	if clientNow.Before(lottery.StartTime) {
 		res.Code = -1
 		res.ErrorMsg = "Not started"
 		writeJSON(w, res)
 		return
 	}
-	if nowBJ.After(lottery.EndTime) {
+	if clientNow.After(lottery.EndTime) {
 		// 到期后进行统一开奖，并允许已报名用户查看结果
 		finalizeRemainingPrizes(lottery)
 		// 查找当前用户报名记录
@@ -194,7 +194,7 @@ func LotteryDrawHandler(w http.ResponseWriter, r *http.Request) {
 		EntryCount:     1,
 		IsWinner:       false,
 		PrizeReceived:  false,
-		ParticipatedAt: time.Now(),
+		ParticipatedAt: clientNow,
 	}
 	
 	if err := dao.Imp.CreateParticipant(record); err != nil {

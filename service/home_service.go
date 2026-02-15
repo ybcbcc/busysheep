@@ -3,7 +3,6 @@ package service
 import (
 	"net/http"
 	"wxcloudrun-golang/db/dao"
-	"time"
 )
 
 // HomeListHandler 首页列表接口
@@ -19,13 +18,7 @@ func HomeListHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 到期自动结算：为了首页展示正确，将已到结束时间但未结算的活动统一置为已结束
-	nowBJ := time.Now().Add(8 * time.Hour)
-	for _, l := range lotteries {
-		if l.Status != "finished" && nowBJ.After(l.EndTime) {
-			finalizeRemainingPrizes(l)
-		}
-	}
+	// 不在服务端做时间比较或自动结算，交由前端按客户端当前时间判断
 
 	// 现在的首页只展示 Lottery
 	res.Code = 0

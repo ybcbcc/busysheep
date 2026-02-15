@@ -147,7 +147,8 @@ func UpdatePostHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	nowBJ := time.Now().Add(8 * time.Hour)
-	if lottery.AuditStatus == "approved" && nowBJ.After(lottery.StartTime) {
+	adjStart := lottery.StartTime.Add(-8 * time.Hour)
+	if lottery.AuditStatus == "approved" && nowBJ.After(adjStart) {
 		res.Code = -1
 		res.ErrorMsg = "Lottery started and approved; cannot modify"
 		writeJSON(w, res)

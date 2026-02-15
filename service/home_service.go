@@ -2,7 +2,9 @@ package service
 
 import (
 	"net/http"
+	"time"
 	"wxcloudrun-golang/db/dao"
+	"wxcloudrun-golang/db/model"
 )
 
 // HomeListHandler 首页列表接口
@@ -22,6 +24,14 @@ func HomeListHandler(w http.ResponseWriter, r *http.Request) {
 
 	// 现在的首页只展示 Lottery
 	res.Code = 0
-	res.Data = lotteries
+	bj := time.FixedZone("CST", 8*3600)
+	out := make([]*model.Lottery, 0, len(lotteries))
+	for _, l := range lotteries {
+		c := *l
+		c.StartTime = l.StartTime.In(bj)
+		c.EndTime = l.EndTime.In(bj)
+		out = append(out, &c)
+	}
+	res.Data = out
 	writeJSON(w, res)
 }

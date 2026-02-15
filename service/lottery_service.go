@@ -31,14 +31,16 @@ func LotteryDetailHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 时间诊断日志（北京时间）
 	bj := time.FixedZone("CST", 8*3600)
 	serverNow := time.Now().In(bj)
 	fmt.Printf("[TimeDiag][detail][BJ] now=%s start=%s end=%s status=%s\n",
 		serverNow.Format("2006-01-02 15:04:05"), lottery.StartTime.In(bj).Format("2006-01-02 15:04:05"), lottery.EndTime.In(bj).Format("2006-01-02 15:04:05"), lottery.Status)
 
 	res.Code = 0
-	res.Data = lottery
+	out := *lottery
+	out.StartTime = lottery.StartTime.In(bj)
+	out.EndTime = lottery.EndTime.In(bj)
+	res.Data = &out
 	writeJSON(w, res)
 }
 
@@ -111,17 +113,20 @@ func LotteryDrawHandler(w http.ResponseWriter, r *http.Request) {
 			clientNow = t.In(bj)
 		}
 	}
-	fmt.Printf("[TimeDiag][draw][BJ] now=%s start=%s end=%s before_start=%t after_end=%t\n",
+	adjStart := lottery.StartTime.Add(-8 * time.Hour)
+	adjEnd := lottery.EndTime.Add(-8 * time.Hour)
+	fmt.Printf("[TimeDiag][draw][BJ] now=%s start=%s end=%s adjStart=%s adjEnd=%s before_start=%t after_end=%t\n",
 		clientNow.Format("2006-01-02 15:04:05"),
 		lottery.StartTime.In(bj).Format("2006-01-02 15:04:05"), lottery.EndTime.In(bj).Format("2006-01-02 15:04:05"),
-		clientNow.Before(lottery.StartTime), clientNow.After(lottery.EndTime))
-	if clientNow.Before(lottery.StartTime) {
+		adjStart.In(bj).Format("2006-01-02 15:04:05"), adjEnd.In(bj).Format("2006-01-02 15:04:05"),
+		clientNow.Before(adjStart), clientNow.After(adjEnd))
+	if clientNow.Before(adjStart) {
 		res.Code = -1
 		res.ErrorMsg = "Not started"
 		writeJSON(w, res)
 		return
 	}
-	if clientNow.After(lottery.EndTime) {
+	if clientNow.After(adjEnd) {
 		// 到期后进行统一开奖，并允许已报名用户查看结果
 		finalizeRemainingPrizes(lottery)
 		// 查找当前用户报名记录

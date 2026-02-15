@@ -31,11 +31,11 @@ func LotteryDetailHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 时间诊断日志（不做服务端时间比较）
-	serverNow := time.Now()
-	fmt.Printf("[TimeDiag][detail] server_now=%s zone=%s start=%s end=%s status=%s\n",
-		serverNow.Format(time.RFC3339), serverNow.Location().String(),
-		lottery.StartTime.Format(time.RFC3339), lottery.EndTime.Format(time.RFC3339), lottery.Status)
+	// 时间诊断日志（北京时间）
+	bj := time.FixedZone("CST", 8*3600)
+	serverNow := time.Now().In(bj)
+	fmt.Printf("[TimeDiag][detail][BJ] now=%s start=%s end=%s status=%s\n",
+		serverNow.Format("2006-01-02 15:04:05"), lottery.StartTime.In(bj).Format("2006-01-02 15:04:05"), lottery.EndTime.In(bj).Format("2006-01-02 15:04:05"), lottery.Status)
 
 	res.Code = 0
 	res.Data = lottery
@@ -103,16 +103,17 @@ func LotteryDrawHandler(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, res)
 		return
 	}
-	// 使用客户端时间进行比较
-	clientNow := time.Now()
+	// 使用客户端时间进行比较（北京时间日志）
+	bj := time.FixedZone("CST", 8*3600)
+	clientNow := time.Now().In(bj)
 	if req.ClientNow != "" {
 		if t, err := time.Parse(time.RFC3339, req.ClientNow); err == nil {
-			clientNow = t
+			clientNow = t.In(bj)
 		}
 	}
-	fmt.Printf("[TimeDiag][draw] client_now=%s start=%s end=%s before_start=%t after_end=%t\n",
-		clientNow.Format(time.RFC3339),
-		lottery.StartTime.Format(time.RFC3339), lottery.EndTime.Format(time.RFC3339),
+	fmt.Printf("[TimeDiag][draw][BJ] now=%s start=%s end=%s before_start=%t after_end=%t\n",
+		clientNow.Format("2006-01-02 15:04:05"),
+		lottery.StartTime.In(bj).Format("2006-01-02 15:04:05"), lottery.EndTime.In(bj).Format("2006-01-02 15:04:05"),
 		clientNow.Before(lottery.StartTime), clientNow.After(lottery.EndTime))
 	if clientNow.Before(lottery.StartTime) {
 		res.Code = -1

@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"wxcloudrun-golang/db/dao"
 	"wxcloudrun-golang/db/model"
+	"time"
 )
 
 type AdminAuditListRequest struct {
@@ -101,6 +102,15 @@ func AdminLotteryAuditHandler(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, res)
 		return
 	}
+	bj := time.FixedZone("CST", 8*3600)
+	nowBJ := time.Now().In(bj)
+	adjStart := lottery.StartTime.Add(-8 * time.Hour)
+	if nowBJ.After(adjStart) {
+		res.Code = -1
+		res.ErrorMsg = "Cannot audit after start"
+		writeJSON(w, res)
+		return
+	}
 	if req.Action == "approved" {
 		lottery.AuditStatus = "approved"
 		lottery.Status = "active"
@@ -122,5 +132,39 @@ func AdminLotteryAuditHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	res.Code = 0
 	res.Data = map[string]string{"result": "ok"}
+	writeJSON(w, res)
+}
+
+func AdminLotteryDeleteHandler(w http.ResponseWriter, r *http.Request) {
+	res := &JsonResult{}
+	user, err := GetUserFromRequest(r)
+	if err != nil || user.Role != "admin" {
+		res.Code = 403
+		res.ErrorMsg = "Forbidden"
+		writeJSON(w, res)
+		return
+	}
+	id := r.URL.Query().Get("id")
+	if id == "" {
+		decoder := json.NewDecoder(r.Body)
+		var req struct{ ID string `json:"id"` }
+		if err := decoder.Decode(&req); err == nil {
+			id = req.ID
+		}
+	}
+	if id == "" {
+		res.Code = -1
+		res.ErrorMsg = "ID is required"
+		writeJSON(w, res)
+		return
+	}
+	if err := dao.Imp.DeleteLottery(id); err != nil {
+		res.Code = -1
+		res.ErrorMsg = "Failed to delete lottery"
+		writeJSON(w, res)
+		return
+	}
+	res.Code = 0
+	res.ErrorMsg = "Success"
 	writeJSON(w, res)
 }

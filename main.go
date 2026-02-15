@@ -47,6 +47,7 @@ func main() {
 	http.HandleFunc("/api/admin/lotteries", service.AdminLotteryListHandler)
 	http.HandleFunc("/api/admin/lottery/detail", service.AdminLotteryDetailHandler)
 	http.HandleFunc("/api/admin/lottery/audit", service.AdminLotteryAuditHandler)
+	http.HandleFunc("/api/admin/lottery/delete", service.AdminLotteryDeleteHandler)
 
 	// Post (Upload logic moved to frontend wx.cloud.uploadFile)
 	http.HandleFunc("/api/post/create", service.CreatePostHandler)

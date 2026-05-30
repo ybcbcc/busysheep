@@ -16,22 +16,22 @@ import (
 )
 
 type ActivityCreateRequest struct {
-	Name            string    `json:"name"`
-	ImageURL        string    `json:"imageUrl"`
-	Content         string    `json:"content"`
-	StartTime       time.Time `json:"startTime"`
-	DurationMinutes int       `json:"durationMinutes"`
-	AppearanceCount int       `json:"appearanceCount"`
+	Name            string `json:"name"`
+	ImageURL        string `json:"imageUrl"`
+	Content         string `json:"content"`
+	StartTime       string `json:"startTime"`
+	DurationMinutes int    `json:"durationMinutes"`
+	AppearanceCount int    `json:"appearanceCount"`
 }
 
 type ActivityUpdateRequest struct {
-	ID              string    `json:"id"`
-	Name            string    `json:"name"`
-	ImageURL        string    `json:"imageUrl"`
-	Content         string    `json:"content"`
-	StartTime       time.Time `json:"startTime"`
-	DurationMinutes int       `json:"durationMinutes"`
-	AppearanceCount int       `json:"appearanceCount"`
+	ID              string `json:"id"`
+	Name            string `json:"name"`
+	ImageURL        string `json:"imageUrl"`
+	Content         string `json:"content"`
+	StartTime       string `json:"startTime"`
+	DurationMinutes int    `json:"durationMinutes"`
+	AppearanceCount int    `json:"appearanceCount"`
 }
 
 func ActivityListHandler(w http.ResponseWriter, r *http.Request) {
@@ -103,6 +103,13 @@ func ActivityCreateHandler(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, res)
 		return
 	}
+	startTime, err := parseActivityStartTime(req.StartTime)
+	if err != nil {
+		res.Code = -1
+		res.ErrorMsg = "Invalid startTime, expected format: YYYY-MM-DD HH:mm:ss"
+		writeJSON(w, res)
+		return
+	}
 	now := time.Now()
 	activity := &model.Activity{
 		ID:              uuidTo32(uuid.New().String()),
@@ -110,7 +117,7 @@ func ActivityCreateHandler(w http.ResponseWriter, r *http.Request) {
 		Name:            req.Name,
 		ImageURL:        req.ImageURL,
 		Content:         req.Content,
-		StartTime:       req.StartTime,
+		StartTime:       startTime,
 		DurationMinutes: req.DurationMinutes,
 		AppearanceCount: req.AppearanceCount,
 		CreatedAt:       now,
@@ -149,6 +156,13 @@ func ActivityUpdateHandler(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, res)
 		return
 	}
+	startTime, err := parseActivityStartTime(req.StartTime)
+	if err != nil {
+		res.Code = -1
+		res.ErrorMsg = "Invalid startTime, expected format: YYYY-MM-DD HH:mm:ss"
+		writeJSON(w, res)
+		return
+	}
 	activity, err := dao.Imp.GetActivityByID(req.ID)
 	if err != nil {
 		res.Code = -1
@@ -159,7 +173,7 @@ func ActivityUpdateHandler(w http.ResponseWriter, r *http.Request) {
 	activity.Name = req.Name
 	activity.ImageURL = req.ImageURL
 	activity.Content = req.Content
-	activity.StartTime = req.StartTime
+	activity.StartTime = startTime
 	activity.DurationMinutes = req.DurationMinutes
 	activity.AppearanceCount = req.AppearanceCount
 	activity.UpdatedAt = time.Now()
@@ -230,7 +244,7 @@ func ActivityAdLatestHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
   show := false
-  now := time.Now()
+  now := currentActivityTime()
   if activity.AppearanceCount == 0 {
     show = false
   } else if activity.AppearanceCount == -1 {
@@ -294,6 +308,22 @@ func ActivityAnnouncementsHandler(w http.ResponseWriter, r *http.Request) {
 
 func uuidTo32(s string) string {
 	return strings.ReplaceAll(s, "-", "")
+}
+
+func activityLocation() *time.Location {
+	return time.FixedZone("CST", 8*3600)
+}
+
+// 中文注释：活动模块统一按北京时间解析开始时间，避免前后端重复做时区换算
+func parseActivityStartTime(value string) (time.Time, error) {
+	if strings.TrimSpace(value) == "" {
+		return currentActivityTime(), nil
+	}
+	return time.ParseInLocation("2006-01-02 15:04:05", value, activityLocation())
+}
+
+func currentActivityTime() time.Time {
+	return time.Now().In(activityLocation())
 }
 
 func sameDay(a time.Time, b time.Time) bool {

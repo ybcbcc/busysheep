@@ -1,6 +1,8 @@
 package dao
 
 import (
+	"time"
+
 	"wxcloudrun-golang/db"
 	"wxcloudrun-golang/db/model"
 )
@@ -178,8 +180,9 @@ func (imp *CounterInterfaceImp) GetActivityByID(id string) (*model.Activity, err
 // GetActiveActivities 获取当前有效活动
 func (imp *CounterInterfaceImp) GetActiveActivities() ([]*model.Activity, error) {
 	var activities []*model.Activity
-	// 当前时间在时间窗内且 AppearanceCount != 0
-	err := db.Get().Where("start_time <= NOW() AND DATE_ADD(start_time, INTERVAL duration_minutes MINUTE) >= NOW() AND appearance_count <> 0").
+	// 中文注释：活动时间统一按北京时间判断，避免依赖数据库环境时区
+	now := time.Now().In(time.FixedZone("CST", 8*3600)).Format("2006-01-02 15:04:05")
+	err := db.Get().Where("start_time <= ? AND DATE_ADD(start_time, INTERVAL duration_minutes MINUTE) >= ? AND appearance_count <> 0", now, now).
 		Order("created_at desc").Find(&activities).Error
 	return activities, err
 }
@@ -201,7 +204,9 @@ func (imp *CounterInterfaceImp) GetUserCreatedActivities(userID string) ([]*mode
 // GetLatestActiveActivity 获取最新有效的活动广告
 func (imp *CounterInterfaceImp) GetLatestActiveActivity() (*model.Activity, error) {
 	var activity model.Activity
-	err := db.Get().Where("start_time <= NOW() AND DATE_ADD(start_time, INTERVAL duration_minutes MINUTE) >= NOW() AND appearance_count <> 0").
+	// 中文注释：广告活动查询与列表查询共用同一北京时间判断口径
+	now := time.Now().In(time.FixedZone("CST", 8*3600)).Format("2006-01-02 15:04:05")
+	err := db.Get().Where("start_time <= ? AND DATE_ADD(start_time, INTERVAL duration_minutes MINUTE) >= ? AND appearance_count <> 0", now, now).
 		Order("updated_at desc").First(&activity).Error
 	return &activity, err
 }

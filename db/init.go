@@ -16,7 +16,8 @@ var dbInstance *gorm.DB
 // Init 初始化数据库
 func Init() error {
 
-	source := "%s:%s@tcp(%s)/%s?readTimeout=1500ms&writeTimeout=1500ms&charset=utf8&loc=Local&parseTime=true"
+	// 中文注释：显式固定数据库时间解析为北京时间，避免部署环境 Local 时区不一致
+	source := "%s:%s@tcp(%s)/%s?readTimeout=1500ms&writeTimeout=1500ms&charset=utf8&loc=Asia%%2FShanghai&parseTime=true"
 	user := os.Getenv("MYSQL_USERNAME")
 	pwd := os.Getenv("MYSQL_PASSWORD")
 	addr := os.Getenv("MYSQL_ADDRESS")

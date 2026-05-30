@@ -13,11 +13,16 @@ import (
 
 var dbInstance *gorm.DB
 
+func beijingLocation() *time.Location {
+	return time.FixedZone("CST", 8*3600)
+}
+
 // Init 初始化数据库
 func Init() error {
-
-	// 中文注释：显式固定数据库时间解析为北京时间，避免部署环境 Local 时区不一致
-	source := "%s:%s@tcp(%s)/%s?readTimeout=1500ms&writeTimeout=1500ms&charset=utf8&loc=Asia%%2FShanghai&parseTime=true"
+	// 中文注释：使用固定东八区覆盖 time.Local，避免容器缺少 Asia/Shanghai 时区数据导致启动失败
+	time.Local = beijingLocation()
+	// 中文注释：DSN 继续使用 Local，由上面的固定时区保证其等价于北京时间
+	source := "%s:%s@tcp(%s)/%s?readTimeout=1500ms&writeTimeout=1500ms&charset=utf8&loc=Local&parseTime=true"
 	user := os.Getenv("MYSQL_USERNAME")
 	pwd := os.Getenv("MYSQL_PASSWORD")
 	addr := os.Getenv("MYSQL_ADDRESS")
@@ -40,6 +45,11 @@ func Init() error {
 	sqlDB, err := db.DB()
 	if err != nil {
 		fmt.Println("DB Init error,err=", err.Error())
+		return err
+	}
+	// 中文注释：显式将数据库会话时区固定为东八区，降低 CURRENT_TIMESTAMP 等函数的环境差异
+	if err := db.Exec("SET time_zone = '+08:00'").Error; err != nil {
+		fmt.Println("Set session time zone error,err=", err.Error())
 		return err
 	}
 

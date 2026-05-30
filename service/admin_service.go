@@ -104,8 +104,8 @@ func AdminLotteryAuditHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	bj := time.FixedZone("CST", 8*3600)
 	nowBJ := time.Now().In(bj)
-	adjStart := lottery.StartTime.Add(-8 * time.Hour)
-	if nowBJ.After(adjStart) {
+	startBJ := lottery.StartTime.In(bj)
+	if nowBJ.After(startBJ) {
 		res.Code = -1
 		res.ErrorMsg = "Cannot audit after start"
 		writeJSON(w, res)

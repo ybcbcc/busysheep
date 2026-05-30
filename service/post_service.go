@@ -146,9 +146,10 @@ func UpdatePostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	nowBJ := time.Now().Add(8 * time.Hour)
-	adjStart := lottery.StartTime.Add(-8 * time.Hour)
-	if lottery.AuditStatus == "approved" && nowBJ.After(adjStart) {
+	bj := time.FixedZone("CST", 8*3600)
+	nowBJ := time.Now().In(bj)
+	startBJ := lottery.StartTime.In(bj)
+	if lottery.AuditStatus == "approved" && nowBJ.After(startBJ) {
 		res.Code = -1
 		res.ErrorMsg = "Lottery started and approved; cannot modify"
 		writeJSON(w, res)
@@ -177,7 +178,6 @@ func UpdatePostHandler(w http.ResponseWriter, r *http.Request) {
 		lottery.EndTime = lottery.StartTime.Add(time.Duration(req.DrawDuration) * time.Minute)
 	}
 	if req.StartTime != "" {
-		bj := time.FixedZone("CST", 8*3600)
 		if tBj, err := time.ParseInLocation("2006-01-02 15:04:05", req.StartTime, bj); err == nil {
 			startUTC := tBj.UTC()
 			lottery.StartTime = startUTC

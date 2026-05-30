@@ -113,20 +113,19 @@ func LotteryDrawHandler(w http.ResponseWriter, r *http.Request) {
 			clientNow = t.In(bj)
 		}
 	}
-	adjStart := lottery.StartTime.Add(-8 * time.Hour)
-	adjEnd := lottery.EndTime.Add(-8 * time.Hour)
-	fmt.Printf("[TimeDiag][draw][BJ] now=%s start=%s end=%s adjStart=%s adjEnd=%s before_start=%t after_end=%t\n",
+	startBJ := lottery.StartTime.In(bj)
+	endBJ := lottery.EndTime.In(bj)
+	fmt.Printf("[TimeDiag][draw][BJ] now=%s start=%s end=%s before_start=%t after_end=%t\n",
 		clientNow.Format("2006-01-02 15:04:05"),
-		lottery.StartTime.In(bj).Format("2006-01-02 15:04:05"), lottery.EndTime.In(bj).Format("2006-01-02 15:04:05"),
-		adjStart.In(bj).Format("2006-01-02 15:04:05"), adjEnd.In(bj).Format("2006-01-02 15:04:05"),
-		clientNow.Before(adjStart), clientNow.After(adjEnd))
-	if clientNow.Before(adjStart) {
+		startBJ.Format("2006-01-02 15:04:05"), endBJ.Format("2006-01-02 15:04:05"),
+		clientNow.Before(startBJ), clientNow.After(endBJ))
+	if clientNow.Before(startBJ) {
 		res.Code = -1
 		res.ErrorMsg = "Not started"
 		writeJSON(w, res)
 		return
 	}
-	if clientNow.After(adjEnd) {
+	if clientNow.After(endBJ) {
 		// 到期后进行统一开奖，并允许已报名用户查看结果
 		finalizeRemainingPrizes(lottery)
 		// 查找当前用户报名记录

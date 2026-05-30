@@ -33,6 +33,9 @@ func main() {
 	// Lottery
 	http.HandleFunc("/api/lottery/detail", service.LotteryDetailHandler)
 	http.HandleFunc("/api/lottery/draw", service.LotteryDrawHandler)
+	http.HandleFunc("/api/lottery/share/create", service.LotteryShareCreateHandler)
+	http.HandleFunc("/api/lottery/share/confirm", service.LotteryShareConfirmHandler)
+	http.HandleFunc("/api/lottery/share/reward", service.LotteryShareRewardHandler)
 
 	// Activity
 	http.HandleFunc("/api/activity/list", service.ActivityListHandler)

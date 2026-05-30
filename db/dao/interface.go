@@ -32,6 +32,13 @@ type CounterInterface interface {
 	GetUserParticipants(userID string) ([]*model.LotteryParticipant, error)
 	GetLotteryParticipants(lotteryID string) ([]*model.LotteryParticipant, error)
 
+	// Share
+	CreateLotteryShareRecord(record *model.LotteryShareRecord) error
+	GetLotteryShareRecordByCode(shareCode string) (*model.LotteryShareRecord, error)
+	UpdateLotteryShareRecord(record *model.LotteryShareRecord) error
+	CreateLotteryShareReward(reward *model.LotteryShareReward) error
+	GetLotteryShareReward(lotteryID, shareUserID, receiverUserID string) (*model.LotteryShareReward, error)
+
 	// Post (Legacy adapter)
 	CreatePost(post *model.Post) error
 	GetActivePosts() ([]*model.Post, error)

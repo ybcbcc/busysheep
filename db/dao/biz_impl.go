@@ -103,6 +103,37 @@ func (imp *CounterInterfaceImp) GetLotteryParticipants(lotteryID string) ([]*mod
 	return participants, err
 }
 
+// CreateLotteryShareRecord 创建分享发起记录
+func (imp *CounterInterfaceImp) CreateLotteryShareRecord(record *model.LotteryShareRecord) error {
+	return db.Get().Create(record).Error
+}
+
+// GetLotteryShareRecordByCode 根据分享码查询分享记录
+func (imp *CounterInterfaceImp) GetLotteryShareRecordByCode(shareCode string) (*model.LotteryShareRecord, error) {
+	var record model.LotteryShareRecord
+	err := db.Get().Where("share_code = ?", shareCode).First(&record).Error
+	return &record, err
+}
+
+// UpdateLotteryShareRecord 更新分享记录
+func (imp *CounterInterfaceImp) UpdateLotteryShareRecord(record *model.LotteryShareRecord) error {
+	return db.Get().Save(record).Error
+}
+
+// CreateLotteryShareReward 创建分享奖励记录
+func (imp *CounterInterfaceImp) CreateLotteryShareReward(reward *model.LotteryShareReward) error {
+	return db.Get().Create(reward).Error
+}
+
+// GetLotteryShareReward 查询分享奖励记录
+func (imp *CounterInterfaceImp) GetLotteryShareReward(lotteryID, shareUserID, receiverUserID string) (*model.LotteryShareReward, error) {
+	var reward model.LotteryShareReward
+	err := db.Get().
+		Where("lottery_id = ? AND share_user_id = ? AND receiver_user_id = ?", lotteryID, shareUserID, receiverUserID).
+		First(&reward).Error
+	return &reward, err
+}
+
 // CreatePost 创建发布内容
 func (imp *CounterInterfaceImp) CreatePost(post *model.Post) error {
 	return db.Get().Create(post).Error

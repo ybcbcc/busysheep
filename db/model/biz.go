@@ -111,3 +111,31 @@ type ActivityExposure struct {
 	CreatedAt     time.Time  `gorm:"type:datetime;default:CURRENT_TIMESTAMP" json:"createdAt"`
 	UpdatedAt     time.Time  `gorm:"type:datetime;default:CURRENT_TIMESTAMP" json:"updatedAt"`
 }
+
+// LotteryShareRecord 抽奖活动分享发起记录
+type LotteryShareRecord struct {
+	ID           int64     `gorm:"primaryKey;autoIncrement" json:"id"`
+	LotteryID    string    `gorm:"type:varchar(32);index:idx_lottery_share_user;not null" json:"lotteryId"`
+	ShareUserID  string    `gorm:"type:varchar(32);index:idx_lottery_share_user;not null" json:"shareUserId"`
+	ShareCode    string    `gorm:"type:varchar(64);uniqueIndex:uk_share_code;not null" json:"shareCode"`
+	ShareChannel string    `gorm:"type:varchar(32);default:'wechat_friend'" json:"shareChannel"`
+	ShareSource  string    `gorm:"type:varchar(32);default:'top_button'" json:"shareSource"`
+	ShareStatus  string    `gorm:"type:varchar(16);default:'prepared';index:idx_share_status" json:"shareStatus"`
+	SharedAt     *time.Time `gorm:"type:datetime" json:"sharedAt"`
+	CreatedAt    time.Time `gorm:"type:datetime;default:CURRENT_TIMESTAMP" json:"createdAt"`
+	UpdatedAt    time.Time `gorm:"type:datetime;default:CURRENT_TIMESTAMP" json:"updatedAt"`
+}
+
+// LotteryShareReward 抽奖活动分享回流奖励记录
+type LotteryShareReward struct {
+	ID             int64      `gorm:"primaryKey;autoIncrement" json:"id"`
+	LotteryID      string     `gorm:"type:varchar(32);uniqueIndex:uk_share_reward;not null" json:"lotteryId"`
+	ShareUserID    string     `gorm:"type:varchar(32);uniqueIndex:uk_share_reward;index:idx_share_user_reward;not null" json:"shareUserId"`
+	ReceiverUserID string     `gorm:"type:varchar(32);uniqueIndex:uk_share_reward;not null" json:"receiverUserId"`
+	ShareCode      string     `gorm:"type:varchar(64);index:idx_share_code_reward" json:"shareCode"`
+	RewardPoints   int        `gorm:"default:10" json:"rewardPoints"`
+	Rewarded       bool       `gorm:"default:true" json:"rewarded"`
+	RewardedAt     *time.Time `gorm:"type:datetime" json:"rewardedAt"`
+	CreatedAt      time.Time  `gorm:"type:datetime;default:CURRENT_TIMESTAMP" json:"createdAt"`
+	UpdatedAt      time.Time  `gorm:"type:datetime;default:CURRENT_TIMESTAMP" json:"updatedAt"`
+}
